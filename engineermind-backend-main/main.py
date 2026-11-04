@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from models import SessionLocal, Project, SimulationCase, DecisionRecord
 from knowledge_engine import KNOWLEDGE_BASE
 from ai_copilot import evaluate_copilot_case
+from cfd_visualizer import parse_vtk_polydata, generate_sample_naca0012_vtk
 from openfoam_pipeline import (
     setup_openfoam_case_directory,
     run_openfoam_subprocess_pipeline,
@@ -407,6 +408,40 @@ def export_verification_pdf():
         "status": "VERIFIED_COMPLIANT",
         "timestamp": datetime.utcnow().isoformat(),
         "digital_signature": "SHA256:4a8b79e2f901c9a6d84f88414e05b38a7c29e46a"
+    }
+
+# ==========================================
+# Real VTK Surface Mesh Ingestion API
+# ==========================================
+@app.post("/api/cfd/parse-results")
+async def parse_cfd_vtk_results(file: UploadFile = File(...)):
+    contents = await file.read()
+    text = contents.decode("utf-8", errors="ignore")
+    parsed = parse_vtk_polydata(text)
+    return {
+        "filename": file.filename,
+        "num_vertices": parsed["num_vertices"],
+        "num_triangles": parsed["num_triangles"],
+        "vertices": parsed["vertices"],
+        "indices": parsed["indices"],
+        "scalars": parsed["scalars"],
+        "scalar_stats": parsed["scalar_stats"],
+        "available_fields": list(parsed["scalars"].keys())
+    }
+
+@app.get("/api/cfd/sample-vtk")
+def get_sample_cfd_vtk(chord_m: float = 1.0, span_m: float = 2.0, u_inf: float = 40.0):
+    sample_text = generate_sample_naca0012_vtk(chord_m=chord_m, span_m=span_m, u_inf=u_inf)
+    parsed = parse_vtk_polydata(sample_text)
+    return {
+        "filename": "naca0012_foamToVTK_sample.vtk",
+        "num_vertices": parsed["num_vertices"],
+        "num_triangles": parsed["num_triangles"],
+        "vertices": parsed["vertices"],
+        "indices": parsed["indices"],
+        "scalars": parsed["scalars"],
+        "scalar_stats": parsed["scalar_stats"],
+        "available_fields": list(parsed["scalars"].keys())
     }
 
 # ==========================================

@@ -206,10 +206,25 @@
 
       <!-- ZONE 3: Center-Bottom Workbench (Hidden on Landing, Visible in Workstation) -->
       <div id="bottomWorkbench" style="display: none; height: 42%; background: var(--bg-panel); border-top: 1px solid var(--border-hairline); flex-direction: column;">
-        <div style="display: flex; border-bottom: 1px solid var(--border-hairline); background: #0A0C10;">
-          <button class="tab-btn active" id="tabBtnDicts" onclick="switchWorkbenchTab('dicts')">Solver Dictionaries</button>
-          <button class="tab-btn" id="tabBtnConvergence" onclick="switchWorkbenchTab('convergence')">Convergence &amp; Residuals</button>
-          <button class="tab-btn" id="tabBtnGCI" onclick="switchWorkbenchTab('gci')"><span class="clickable-term" data-term="roache_gci">ASME V&amp;V 20 GCI</span></button>
+        <div style="display: flex; border-bottom: 1px solid var(--border-hairline); background: #0A0C10; justify-content: space-between; align-items: center;">
+          <div style="display: flex;">
+            <button class="tab-btn active" id="tabBtnDicts" onclick="switchWorkbenchTab('dicts')">Solver Dictionaries</button>
+            <button class="tab-btn" id="tabBtnConvergence" onclick="switchWorkbenchTab('convergence')">Convergence &amp; Residuals</button>
+            <button class="tab-btn" id="tabBtnGCI" onclick="switchWorkbenchTab('gci')"><span class="clickable-term" data-term="roache_gci">ASME V&amp;V 20 GCI</span></button>
+            <button class="tab-btn" id="tabBtnVTK" onclick="switchWorkbenchTab('vtk')">VTK 3D Contours</button>
+          </div>
+          <div id="vtkControlsBar" style="display: none; padding-right: 12px; gap: 8px; align-items: center;">
+            <span style="font-size: 10px; color: var(--text-muted);">SCALAR:</span>
+            <select id="selScalarField" class="input-precision" style="width: 140px;" onchange="applyVtkScalar(this.value)">
+              <option value="none">Geometry Only</option>
+              <option value="Cp" selected>Surface Pressure Cp</option>
+              <option value="p">Static Pressure (Pa)</option>
+              <option value="U_magnitude">Velocity Magnitude |U|</option>
+            </select>
+            <input type="file" id="vtkUploader" accept=".vtk,.vtp,.vtu" style="display: none;" onchange="handleVtkUpload(this)" />
+            <button class="btn-action" style="background: #1E2330; color: var(--accent-cyan); border: 1px solid var(--border-hairline);" onclick="document.getElementById('vtkUploader').click()">📂 Ingest foamToVTK File</button>
+            <button class="btn-action" style="background: rgba(0,199,232,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,199,232,0.3);" onclick="loadSampleVtkContour()">Load NACA 0012 Post-Field</button>
+          </div>
         </div>
         <div id="tabContentDicts" style="flex: 1; padding: 12px; overflow-y: auto;">
           <pre id="codeView" class="mono" style="font-size: 11px; color: var(--accent-cyan); line-height: 1.5;"></pre>
@@ -230,6 +245,32 @@
             <button id="btnRunGCI" class="btn-action">Calculate GCI</button>
           </div>
           <div id="gciResults" class="mono" style="font-size: 11px; color: var(--accent-emerald); line-height: 1.6;"></div>
+        </div>
+
+        <!-- Tab 4: VTK 3D Scalar Field Inspector -->
+        <div id="tabContentVTK" style="display: none; flex: 1; padding: 12px; overflow-y: auto;">
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+            <div style="background: #050608; border: 1px solid var(--border-hairline); padding: 12px; border-radius: 2px;">
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Active Surface Mesh Telemetry</div>
+              <div class="mono" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px;">
+                <div><span style="color: var(--text-muted);">Vertices:</span> <span id="vtkVertCount" style="color:#FFF;">--</span></div>
+                <div><span style="color: var(--text-muted);">Triangles:</span> <span id="vtkTriCount" style="color:#FFF;">--</span></div>
+                <div><span style="color: var(--text-muted);">Active Field:</span> <span id="vtkActiveFieldName" style="color:var(--accent-cyan);">None</span></div>
+              </div>
+              <div style="margin-top: 10px; border-top: 1px solid var(--border-hairline); padding-top: 8px; font-size: 11px;">
+                <span style="color: var(--text-muted);">Scalar Range [Min, Max]:</span>
+                <span id="vtkRangeDisplay" class="mono" style="color: var(--accent-emerald); margin-left: 8px;">--</span>
+              </div>
+            </div>
+            <div style="background: #050608; border: 1px solid var(--border-hairline); padding: 12px; border-radius: 2px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">CAE Rainbow Colormap</div>
+              <div style="height: 14px; width: 100%; background: linear-gradient(to right, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF0000); border-radius: 2px; margin: 8px 0;"></div>
+              <div class="mono" style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted);">
+                <span>Blue: Min / Suction</span>
+                <span>Red: Stagnation / Peak</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -637,10 +678,15 @@ interpolationSchemes { default linear; }
 
     // 5. Workbench Tabs & Diagnostic Parsing via API
     function switchWorkbenchTab(tab) {
-      ['Dicts', 'Convergence', 'GCI'].forEach(t => {
-        document.getElementById(`tabContent${t}`).style.display = 'none';
-        document.getElementById(`tabBtn${t}`).classList.remove('active');
+      ['Dicts', 'Convergence', 'GCI', 'VTK'].forEach(t => {
+        const el = document.getElementById(`tabContent${t}`);
+        const btn = document.getElementById(`tabBtn${t}`);
+        if (el) el.style.display = 'none';
+        if (btn) btn.classList.remove('active');
       });
+      const vtkBar = document.getElementById('vtkControlsBar');
+      if (vtkBar) vtkBar.style.display = (tab === 'vtk') ? 'flex' : 'none';
+
       if (tab === 'dicts') {
         document.getElementById('tabContentDicts').style.display = 'block';
         document.getElementById('tabBtnDicts').classList.add('active');
@@ -650,6 +696,148 @@ interpolationSchemes { default linear; }
       } else if (tab === 'gci') {
         document.getElementById('tabContentGCI').style.display = 'block';
         document.getElementById('tabBtnGCI').classList.add('active');
+      } else if (tab === 'vtk') {
+        document.getElementById('tabContentVTK').style.display = 'block';
+        document.getElementById('tabBtnVTK').classList.add('active');
+        if (!currentVtkData) loadSampleVtkContour();
+      }
+    }
+
+    // ==========================================
+    // Three.js VTK Field Renderer & Colormap
+    // ==========================================
+    let currentVtkData = null;
+    let vtkMesh = null;
+
+    function turboRainbowColormap(normalized) {
+      // Clamped 0.0 to 1.0 -> CAE standard Rainbow (Blue -> Cyan -> Green -> Yellow -> Red)
+      const t = Math.max(0.0, Math.min(1.0, normalized));
+      let r = 0, g = 0, b = 0;
+      if (t < 0.25) {
+        // Blue to Cyan
+        r = 0;
+        g = t / 0.25;
+        b = 1;
+      } else if (t < 0.5) {
+        // Cyan to Green
+        r = 0;
+        g = 1;
+        b = 1 - (t - 0.25) / 0.25;
+      } else if (t < 0.75) {
+        // Green to Yellow
+        r = (t - 0.5) / 0.25;
+        g = 1;
+        b = 0;
+      } else {
+        // Yellow to Red
+        r = 1;
+        g = 1 - (t - 0.75) / 0.25;
+        b = 0;
+      }
+      return [r, g, b];
+    }
+
+    function renderVtkMeshToScene(data, scalarName = "Cp") {
+      currentVtkData = data;
+      document.getElementById('vtkVertCount').innerText = data.num_vertices.toLocaleString();
+      document.getElementById('vtkTriCount').innerText = data.num_triangles.toLocaleString();
+      document.getElementById('vtkActiveFieldName').innerText = scalarName;
+
+      // Update selector dropdown options
+      const sel = document.getElementById('selScalarField');
+      if (sel) {
+        sel.innerHTML = '<option value="none">Geometry Only</option>';
+        data.available_fields.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          opt.textContent = f === 'Cp' ? 'Surface Pressure Cp' : (f === 'U_magnitude' ? 'Velocity Magnitude |U|' : f);
+          if (f === scalarName) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+
+      // Build Three.js BufferGeometry
+      const geometry = new THREE.BufferGeometry();
+      const vertices = new Float32Array(data.vertices);
+      const indices = new Uint32Array(data.indices);
+      
+      geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+      const colors = new Float32Array(data.num_vertices * 3);
+      const scalars = data.scalars[scalarName] || [];
+      const stats = data.scalar_stats[scalarName];
+
+      if (scalars.length === data.num_vertices && stats) {
+        const minVal = stats.min;
+        const maxVal = stats.max;
+        const range = maxVal - minVal || 1.0;
+        document.getElementById('vtkRangeDisplay').innerText = `[${minVal.toFixed(3)}, ${maxVal.toFixed(3)}]`;
+
+        for (let i = 0; i < data.num_vertices; i++) {
+          const norm = (scalars[i] - minVal) / range;
+          const [r, g, b] = turboRainbowColormap(norm);
+          colors[i * 3] = r;
+          colors[i * 3 + 1] = g;
+          colors[i * 3 + 2] = b;
+        }
+      } else {
+        document.getElementById('vtkRangeDisplay').innerText = `Solid Monochrome`;
+        for (let i = 0; i < data.num_vertices * 3; i += 3) {
+          colors[i] = 0.2; colors[i+1] = 0.7; colors[i+2] = 0.9;
+        }
+      }
+
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.computeVertexNormals();
+      geometry.center();
+
+      if (vtkMesh) scene.remove(vtkMesh);
+      if (modelMesh) scene.remove(modelMesh);
+
+      const material = new THREE.MeshStandardMaterial({
+        vertexColors: scalarName !== 'none',
+        color: scalarName === 'none' ? 0x00C7E8 : 0xFFFFFF,
+        roughness: 0.35,
+        metalness: 0.15,
+        side: THREE.DoubleSide
+      });
+
+      vtkMesh = new THREE.Mesh(geometry, material);
+      modelMesh = vtkMesh;
+      scene.add(vtkMesh);
+    }
+
+    function applyVtkScalar(fieldName) {
+      if (!currentVtkData) return;
+      renderVtkMeshToScene(currentVtkData, fieldName);
+    }
+
+    async function loadSampleVtkContour() {
+      try {
+        const res = await fetch(`${API}/api/cfd/sample-vtk`);
+        const data = await res.json();
+        renderVtkMeshToScene(data, "Cp");
+      } catch (err) {
+        console.warn("Could not load sample VTK:", err);
+      }
+    }
+
+    async function handleVtkUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const res = await fetch(`${API}/api/cfd/parse-results`, { method: "POST", body: fd });
+        const data = await res.json();
+        const activeField = data.available_fields.includes("Cp") ? "Cp" : data.available_fields[0] || "none";
+        renderVtkMeshToScene(data, activeField);
+      } catch (err) {
+        console.error("VTK parse error:", err);
+        alert("Failed to parse VTK file. Please ensure valid legacy VTK format.");
       }
     }
 
