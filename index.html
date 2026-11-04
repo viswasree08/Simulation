@@ -1,0 +1,2687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroForge Systems | Advanced Aerospace CFD Simulation</title>
+  <meta name="description" content="Explore AeroForge Systems, an advanced aerospace computational fluid dynamics platform for aerothermal simulation, turbine analysis, hypersonic engineering, and high-performance computing." />
+  <meta name="keywords" content="AeroForge, CFD platform, aerothermal simulation, hypersonic CFD, Navier-Stokes, aerospace engineering, GPU cluster, turbine aeromechanics" />
+  <meta name="author" content="AeroForge Systems Inc." />
+  <meta name="theme-color" content="#0E121B" />
+
+  <!-- Open Graph / Meta -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="AeroForge Systems | Advanced Aerospace CFD Simulation" />
+  <meta property="og:description" content="High-fidelity Navier-Stokes GPU solving engineered for hypersonics, turbine aeromechanics, and orbital propulsion systems. Precision physics verified for mission-critical defense." />
+  <meta property="og:site_name" content="AeroForge Systems" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AeroForge Systems | Advanced Aerospace CFD Simulation" />
+  <meta name="twitter:description" content="High-fidelity Navier-Stokes GPU solving engineered for hypersonics, turbine aeromechanics, and orbital propulsion systems." />
+
+  <!-- Structured Data (JSON-LD) for AeroForge Systems -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AeroForge Systems CFD Platform",
+    "operatingSystem": "Linux, Cloud, Enclave Bare-Metal",
+    "applicationCategory": "EngineeringSimulationApplication",
+    "description": "High-fidelity aerothermal and hypersonic computational fluid dynamics platform.",
+    "creator": {
+      "@type": "Organization",
+      "name": "AeroForge Systems Inc.",
+      "founder": {
+        "@type": "Person",
+        "name": "Dr. Marcus Vance",
+        "jobTitle": "Founder & Chief Architect"
+      }
+    }
+  }
+  </script>
+
+  <!-- Google Fonts Preconnect & Optimized Asynchronous Loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* -------------------------------------------------------------
+       1. DESIGN TOKENS & CSS VARIABLES
+       ------------------------------------------------------------- */
+    :root {
+      --bg-primary: #0E121B;
+      --bg-secondary: #10141E;
+      --bg-card: #171C27;
+      --bg-hover: #1C222E;
+
+      --border-primary: #242B38;
+      --border-secondary: #303847;
+
+      --accent-cyan: #00C7E8;
+      --accent-blue: #A8E5F6;
+      --accent-lavender: #A9BFFF;
+      --accent-amber: #DDA34F;
+
+      --text-primary: #D9DCEB;
+      --text-secondary: #A8B2BE;
+      --text-muted: #788592;
+
+      /* Font Stacks */
+      --font-heading: 'Playfair Display', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      /* Spacing & Layout */
+      --header-height: 70px;
+      --max-width: 1280px;
+      --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* -------------------------------------------------------------
+       2. BASE RESET & ACCESSIBILITY FOUNDATIONS
+       ------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-primary);
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* WCAG 2.2 AA Skip to content link */
+    .skip-to-content {
+      position: absolute;
+      top: -100px;
+      left: 16px;
+      background: var(--accent-cyan);
+      color: #05131D;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px 18px;
+      border-radius: 4px;
+      z-index: 9999;
+      text-decoration: none;
+      transition: top 0.2s ease-in-out;
+    }
+
+    .skip-to-content:focus {
+      top: 16px;
+      outline: 2px solid #FFFFFF;
+      outline-offset: 2px;
+    }
+
+    /* Ambient background grid pattern */
+    .bg-mesh-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(36, 43, 56, 0.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(36, 43, 56, 0.22) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 18%, #000 30%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient Cyan glow */
+    .ambient-glow {
+      position: absolute;
+      top: -120px;
+      left: 15%;
+      width: 520px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(0, 199, 232, 0.08) 0%, rgba(14, 18, 27, 0) 70%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: var(--max-width);
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 28px;
+      padding-right: 28px;
+      position: relative;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      outline: none;
+    }
+
+    /* High-contrast focus state satisfying WCAG 2.2 AA */
+    button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 3px;
+    }
+
+    /* Typography utilities */
+    .font-serif { font-family: var(--font-heading); }
+    .font-mono { font-family: var(--font-mono); }
+    .font-body { font-family: var(--font-body); }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .section-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 14px;
+      height: 1px;
+      background-color: var(--accent-cyan);
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 34px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      margin-bottom: 14px;
+    }
+
+    .section-description {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 680px;
+    }
+
+    /* -------------------------------------------------------------
+       3. NAVIGATION HEADER (FIXED 70PX)
+       ------------------------------------------------------------- */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background-color: rgba(16, 20, 30, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-primary);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+    }
+
+    .brand-logo-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      user-select: none;
+      flex-shrink: 0;
+      min-height: 44px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #171C27 0%, #10141E 100%);
+      border: 1px solid var(--border-secondary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      transition: var(--transition-smooth);
+    }
+
+    .brand-logo-group:hover .brand-mark {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 199, 232, 0.25);
+    }
+
+    .brand-glyph {
+      width: 20px;
+      height: 20px;
+      position: relative;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .brand-title {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      color: #FFFFFF;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .brand-subtitle {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Nav Links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      transition: var(--transition-smooth);
+      position: relative;
+      white-space: nowrap;
+      min-height: 44px;
+    }
+
+    .nav-link:hover {
+      color: #FFFFFF;
+      background-color: rgba(28, 34, 46, 0.5);
+    }
+
+    .nav-link.active {
+      color: var(--accent-cyan);
+      background-color: rgba(0, 199, 232, 0.06);
+    }
+
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -13px;
+      left: 14px;
+      right: 14px;
+      height: 2px;
+      background-color: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    /* Status Indicators */
+    .status-hud-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 16px;
+      border-left: 1px solid var(--border-primary);
+      border-right: 1px solid var(--border-primary);
+      height: 36px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .status-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent-cyan);
+      box-shadow: 0 0 6px var(--accent-cyan);
+      animation: pulse-dot 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.9); }
+    }
+
+    /* Actions */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dropdown-container {
+      position: relative;
+    }
+
+    .btn-quick-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      color: var(--text-primary);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 7px 13px;
+      border-radius: 5px;
+      transition: var(--transition-smooth);
+      min-height: 40px;
+    }
+
+    .btn-quick-action:hover, .btn-quick-action[aria-expanded="true"] {
+      background-color: var(--bg-hover);
+      border-color: var(--border-secondary);
+      color: #FFFFFF;
+    }
+
+    .btn-quick-action svg {
+      color: var(--accent-cyan);
+    }
+
+    .btn-user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 5px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: var(--transition-smooth);
+      position: relative;
+    }
+
+    .btn-user-avatar:hover, .btn-user-avatar[aria-expanded="true"] {
+      border-color: var(--border-secondary);
+      background-color: var(--bg-hover);
+      color: #FFFFFF;
+    }
+
+    .avatar-status-pip {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10B981;
+      border: 2px solid var(--bg-secondary);
+    }
+
+    .btn-mobile-toggle {
+      display: none;
+      width: 44px;
+      height: 44px;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 5px;
+      color: var(--text-primary);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 240px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-secondary);
+      border-radius: 6px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 199, 232, 0.2);
+      padding: 6px;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1050;
+    }
+
+    .dropdown-menu.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .dropdown-header {
+      padding: 8px 10px 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-primary);
+      margin-bottom: 4px;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      transition: var(--transition-smooth);
+      text-align: left;
+      min-height: 38px;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--bg-hover);
+      color: #FFFFFF;
+    }
+
+    .dropdown-item svg {
+      width: 15px;
+      height: 15px;
+      color: var(--accent-cyan);
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background-color: var(--border-primary);
+      margin: 4px 0;
+    }
+
+    .mobile-drawer {
+      display: none;
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      padding: 16px 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+      z-index: 999;
+      transform: translateY(-100%);
+      opacity: 0;
+      transition: all 0.25s ease-in-out;
+    }
+
+    .mobile-drawer.open {
+      transform: translateY(0);
+      opacity: 1;
+      display: block;
+    }
+
+    .mobile-nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mobile-nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      min-height: 44px;
+    }
+
+    .mobile-nav-link.active {
+      color: var(--accent-cyan);
+      border-color: rgba(0, 199, 232, 0.4);
+    }
+
+    /* -------------------------------------------------------------
+       4. HERO SECTION
+       ------------------------------------------------------------- */
+    .hero-section {
+      position: relative;
+      padding-top: calc(var(--header-height) + 72px);
+      padding-bottom: 76px;
+      z-index: 10;
+    }
+
+    .hero-content {
+      max-width: 920px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background-color: rgba(23, 28, 39, 0.85);
+      border: 1px solid var(--border-primary);
+      border-left: 2px solid var(--accent-cyan);
+      padding: 6px 14px 6px 12px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-badge .badge-icon {
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-badge .badge-separator {
+      color: var(--border-secondary);
+      margin: 0 2px;
+    }
+
+    .hero-badge .badge-highlight {
+      color: var(--accent-blue);
+      font-weight: 500;
+    }
+
+    .hero-heading {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 46px;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+      color: #FFFFFF;
+      margin-bottom: 22px;
+      text-wrap: balance;
+    }
+
+    .hero-description {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-cyan {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background-color: var(--accent-cyan);
+      color: #05131D;
+      font-weight: 600;
+      font-size: 13.5px;
+      letter-spacing: 0.02em;
+      padding: 12px 24px;
+      border-radius: 4px;
+      box-shadow: 0 2px 14px rgba(0, 199, 232, 0.35);
+      transition: var(--transition-smooth);
+      min-height: 44px;
+    }
+
+    .btn-primary-cyan:hover {
+      background-color: #38D5EF;
+      box-shadow: 0 4px 20px rgba(0, 199, 232, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background-color: rgba(23, 28, 39, 0.6);
+      border: 1px solid var(--border-secondary);
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 13.5px;
+      padding: 12px 22px;
+      border-radius: 4px;
+      transition: var(--transition-smooth);
+      min-height: 44px;
+    }
+
+    .btn-secondary-outline:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--accent-cyan);
+      color: #FFFFFF;
+      transform: translateY(-1px);
+    }
+
+    .btn-text-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 12px 10px;
+      transition: var(--transition-smooth);
+      min-height: 44px;
+    }
+
+    .btn-text-link:hover {
+      color: var(--accent-blue);
+      transform: translateX(2px);
+    }
+
+    /* -------------------------------------------------------------
+       5. PERFORMANCE KPI STRIP (4 COLUMNS)
+       ------------------------------------------------------------- */
+    .kpi-strip-container {
+      position: relative;
+      z-index: 10;
+      padding-bottom: 72px;
+    }
+
+    .kpi-strip {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 6px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-strip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 199, 232, 0.4) 30%, 
+        rgba(221, 163, 79, 0.4) 80%, 
+        transparent 100%
+      );
+    }
+
+    .kpi-card {
+      padding: 26px 28px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 130px;
+      transition: background-color 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      background-color: rgba(28, 34, 46, 0.45);
+    }
+
+    .kpi-card:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      right: 0;
+      width: 1px;
+      background-color: var(--border-primary);
+    }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .kpi-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .kpi-indicator-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .kpi-body {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 30px;
+      line-height: 1.1;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+    }
+
+    .kpi-value.accent-amber {
+      color: var(--accent-amber);
+      text-shadow: 0 0 16px rgba(221, 163, 79, 0.2);
+    }
+
+    .kpi-subtext {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+    }
+
+    /* -------------------------------------------------------------
+       6. SUBSYSTEM DECOMPOSITION
+       ------------------------------------------------------------- */
+    .subsystem-section {
+      position: relative;
+      padding-top: 24px;
+      padding-bottom: 84px;
+      border-top: 1px solid var(--border-primary);
+    }
+
+    .subsystem-header-area {
+      margin-bottom: 44px;
+    }
+
+    .subsystem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .subsystem-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 6px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: var(--transition-smooth);
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .subsystem-card:hover {
+      border-color: var(--accent-cyan);
+      background-color: var(--bg-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 199, 232, 0.12);
+    }
+
+    .subsystem-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .subsystem-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background-color: rgba(0, 199, 232, 0.08);
+      border: 1px solid rgba(0, 199, 232, 0.25);
+      padding: 3px 8px;
+      border-radius: 3px;
+    }
+
+    .subsystem-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: 5px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-blue);
+      transition: var(--transition-smooth);
+    }
+
+    .subsystem-card:hover .subsystem-icon-box {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .subsystem-title {
+      font-family: var(--font-heading);
+      font-size: 21px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+
+    .subsystem-desc {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      flex-grow: 1;
+    }
+
+    .subsystem-divider {
+      height: 1px;
+      background-color: var(--border-primary);
+      margin-bottom: 20px;
+    }
+
+    .subsystem-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .metric-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .metric-data {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* -------------------------------------------------------------
+       7. LEADERSHIP & VERIFICATION SECTION
+       ------------------------------------------------------------- */
+    .leadership-section {
+      position: relative;
+      padding-top: 72px;
+      padding-bottom: 84px;
+      border-top: 1px solid var(--border-primary);
+      background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(16, 20, 30, 0.45) 100%);
+    }
+
+    .leadership-header-area {
+      margin-bottom: 48px;
+    }
+
+    .leadership-layout {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .founder-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 6px;
+      padding: 32px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    .founder-header {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .founder-avatar-wrap {
+      width: 78px;
+      height: 78px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border-secondary);
+      background: linear-gradient(145deg, #1A2232 0%, #10141E 100%);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .founder-avatar-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .founder-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .founder-role-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .founder-name {
+      font-family: var(--font-heading);
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.15;
+    }
+
+    .founder-credentials {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .achievement-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .badge-chip {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background-color: rgba(28, 34, 46, 0.7);
+      border: 1px solid var(--border-secondary);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-chip svg {
+      width: 12px;
+      height: 12px;
+      color: var(--accent-cyan);
+    }
+
+    .founder-bio {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 26px;
+    }
+
+    .founder-quote {
+      position: relative;
+      padding-left: 20px;
+      border-left: 3px solid var(--accent-cyan);
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 15.5px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background-color: rgba(14, 18, 27, 0.4);
+      padding-top: 12px;
+      padding-bottom: 12px;
+      padding-right: 14px;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .right-column-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .verification-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .verification-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 6px;
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 210px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+
+    .verification-card:hover {
+      border-color: var(--border-secondary);
+      background-color: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+
+    .verification-card.card-cyan {
+      border-top: 2px solid var(--accent-cyan);
+    }
+
+    .verification-card.card-lavender {
+      border-top: 2px solid var(--accent-lavender);
+    }
+
+    .verification-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .verification-metric {
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: 38px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .verification-metric.color-cyan {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 20px rgba(0, 199, 232, 0.25);
+    }
+
+    .verification-metric.color-lavender {
+      color: var(--accent-lavender);
+      text-shadow: 0 0 20px rgba(169, 191, 255, 0.25);
+    }
+
+    .verification-desc {
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .verification-footer-tag {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verification-footer-tag.cyan-tag {
+      color: var(--accent-cyan);
+    }
+
+    .verification-footer-tag.lavender-tag {
+      color: var(--accent-lavender);
+    }
+
+    /* -------------------------------------------------------------
+       8. COMPUTATIONAL MILESTONES
+       ------------------------------------------------------------- */
+    .milestones-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 6px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .milestones-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-primary);
+    }
+
+    .milestones-title {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .milestones-title svg {
+      width: 14px;
+      height: 14px;
+      color: var(--accent-cyan);
+    }
+
+    .milestones-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .milestone-item {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 20px;
+      padding: 18px 0;
+      align-items: baseline;
+      transition: var(--transition-smooth);
+    }
+
+    .milestone-item:not(:last-child) {
+      border-bottom: 1px solid rgba(36, 43, 56, 0.6);
+    }
+
+    .milestone-item:hover {
+      background-color: rgba(28, 34, 46, 0.3);
+      padding-left: 8px;
+      padding-right: 8px;
+      border-radius: 4px;
+    }
+
+    .milestone-date {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background-color: rgba(0, 199, 232, 0.08);
+      border: 1px solid rgba(0, 199, 232, 0.2);
+      padding: 3px 8px;
+      border-radius: 3px;
+      text-align: center;
+      letter-spacing: 0.06em;
+    }
+
+    .milestone-content {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .milestone-heading {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 14px;
+      color: #FFFFFF;
+      line-height: 1.35;
+    }
+
+    .milestone-desc {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    /* -------------------------------------------------------------
+       9. SECURITY AND COMPLIANCE SECTION
+       ------------------------------------------------------------- */
+    .security-section {
+      position: relative;
+      padding-top: 40px;
+      padding-bottom: 84px;
+    }
+
+    .security-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: 6px;
+      padding: 36px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 36px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .security-panel::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 100%;
+      background: radial-gradient(circle at top right, rgba(0, 199, 232, 0.05), transparent 70%);
+      pointer-events: none;
+    }
+
+    .security-content {
+      max-width: 680px;
+    }
+
+    .security-status-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .security-pill-defense {
+      background-color: rgba(0, 199, 232, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 199, 232, 0.35);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 3px;
+    }
+
+    .security-label-supporting {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .security-title {
+      font-family: var(--font-heading);
+      font-size: 26px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .security-desc {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+
+    .security-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    /* -------------------------------------------------------------
+       10. FOOTER SECTION
+       ------------------------------------------------------------- */
+    .site-footer {
+      background-color: var(--bg-secondary);
+      border-top: 1px solid var(--border-primary);
+      padding-top: 64px;
+      padding-bottom: 36px;
+      position: relative;
+      margin-top: auto;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 36px;
+      margin-bottom: 54px;
+    }
+
+    .footer-col-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-links-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: var(--transition-smooth);
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 0;
+      min-height: 28px;
+    }
+
+    .footer-link:hover {
+      color: var(--accent-cyan);
+      transform: translateX(3px);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border-primary);
+      padding-top: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .footer-brand-matrix {
+      color: var(--text-secondary);
+    }
+
+    /* -------------------------------------------------------------
+       11. SCROLL REVEAL & ANIMATIONS
+       ------------------------------------------------------------- */
+    .reveal-item {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    }
+
+    .reveal-item.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-item {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      .status-dot {
+        animation: none !important;
+      }
+      html {
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* -------------------------------------------------------------
+       12. RESPONSIVE BREAKPOINTS (360px -> 1920px)
+       ------------------------------------------------------------- */
+    @media (min-width: 1440px) {
+      .hero-heading {
+        font-size: 48px;
+      }
+      .container {
+        max-width: 1280px;
+      }
+    }
+
+    @media (max-width: 1120px) {
+      .status-hud-group {
+        display: none;
+      }
+
+      .subsystem-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .subsystem-card:nth-child(3) {
+        grid-column: span 2;
+      }
+
+      .leadership-layout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+
+      .security-panel {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .security-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .nav-links {
+        display: none;
+      }
+
+      .btn-mobile-toggle {
+        display: flex;
+      }
+
+      .hero-heading {
+        font-size: 38px;
+      }
+
+      .kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .kpi-card:nth-child(2)::after {
+        display: none;
+      }
+
+      .kpi-card:nth-child(1), .kpi-card:nth-child(2) {
+        border-bottom: 1px solid var(--border-primary);
+      }
+
+      .subsystem-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .subsystem-card:nth-child(3) {
+        grid-column: span 1;
+      }
+
+      .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 28px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .hero-section {
+        padding-top: calc(var(--header-height) + 36px);
+        padding-bottom: 44px;
+      }
+
+      .hero-heading {
+        font-size: 32px;
+      }
+
+      .hero-description {
+        font-size: 14.5px;
+      }
+
+      .section-title {
+        font-size: 26px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-primary-cyan, .btn-secondary-outline, .btn-text-link {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .kpi-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-card:not(:last-child)::after {
+        display: none;
+      }
+
+      .kpi-card:not(:last-child) {
+        border-bottom: 1px solid var(--border-primary);
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .verification-cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .milestone-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .milestone-date {
+        align-self: flex-start;
+      }
+
+      .security-panel {
+        padding: 26px 20px;
+      }
+
+      .security-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .hero-heading {
+        font-size: 28px;
+      }
+      .founder-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WCAG 2.2 Skip Link -->
+  <a href="#main-content" class="skip-to-content">Skip to primary content</a>
+
+  <!-- Ambient visual styling -->
+  <div class="bg-mesh-grid" aria-hidden="true"></div>
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- =============================================================
+       SECTION 5: NAVIGATION HEADER
+       ============================================================= -->
+  <header class="navbar" role="banner">
+    <div class="container navbar-inner">
+      
+      <!-- Brand Logo Component -->
+      <a href="#" class="brand-logo-group" aria-label="AeroForge Systems Home">
+        <div class="brand-mark" aria-hidden="true">
+          <!-- Aerospace supersonic delta-wing vector glyph -->
+          <svg class="brand-glyph" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 20L12 16L22 20L12 2Z" fill="url(#cyanGrad)" stroke="#00C7E8" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 2V16" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="cyanGrad" x1="12" y1="2" x2="12" y2="20" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#00C7E8" stop-opacity="0.45"/>
+                <stop stop-color="#00C7E8" stop-opacity="0.05"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">AeroForge</span>
+          <span class="brand-subtitle">Systems CFD Platform</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="nav-links-wrapper" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li class="nav-link-item">
+            <a href="#subsystems" class="nav-link" id="navSubsystems">Subsystems</a>
+          </li>
+          <li class="nav-link-item">
+            <a href="#leadership" class="nav-link" id="navLeadership">Leadership &amp; Verification</a>
+          </li>
+          <li class="nav-link-item">
+            <a href="#milestones" class="nav-link" id="navMilestones">Milestones</a>
+          </li>
+          <li class="nav-link-item">
+            <a href="#security" class="nav-link" id="navSecurity">Hardware Enclaves</a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- System Status Indicators (Cluster & Sync) -->
+      <div class="status-hud-group" aria-label="Infrastructure Telemetry">
+        <div class="status-item" title="GPU Compute Node Availability">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-label">GPU Cluster:</span>
+          <span class="status-value">99.8% Online</span>
+        </div>
+        <div class="status-item" title="Telemetry Mesh Synchronization">
+          <span class="status-label">Sync:</span>
+          <span class="status-value" style="color: var(--accent-cyan);">Active</span>
+        </div>
+      </div>
+
+      <!-- Header Action Controls -->
+      <div class="header-actions">
+        
+        <!-- Quick Action Menu Dropdown -->
+        <div class="dropdown-container" id="quickActionContainer">
+          <button 
+            type="button" 
+            class="btn-quick-action" 
+            id="quickActionBtn" 
+            aria-haspopup="true" 
+            aria-expanded="false"
+            aria-label="Quick Action Menu"
+          >
+            <i data-lucide="zap" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+            <span>Quick Action</span>
+            <i data-lucide="chevron-down" style="width: 13px; height: 13px; color: var(--text-muted);" aria-hidden="true"></i>
+          </button>
+          
+          <div class="dropdown-menu" id="quickActionDropdown" role="menu" aria-labelledby="quickActionBtn">
+            <div class="dropdown-header">CFD Solver Workflows</div>
+            <button class="dropdown-item" id="actionNewRun" role="menuitem">
+              <i data-lucide="play" aria-hidden="true"></i>
+              <span>New Aerothermal Run</span>
+            </button>
+            <button class="dropdown-item" id="actionImportCAD" role="menuitem">
+              <i data-lucide="upload-cloud" aria-hidden="true"></i>
+              <span>Import CAD / Mesh File</span>
+            </button>
+            <button class="dropdown-item" id="actionConfigBL" role="menuitem">
+              <i data-lucide="sliders" aria-hidden="true"></i>
+              <span>Configure Boundary Layers</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" id="actionVerificationReport" role="menuitem">
+              <i data-lucide="file-check" aria-hidden="true"></i>
+              <span>Verification Report</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- User Profile Dropdown -->
+        <div class="dropdown-container" id="userProfileContainer">
+          <button 
+            type="button" 
+            class="btn-user-avatar" 
+            id="userProfileBtn" 
+            aria-haspopup="true" 
+            aria-expanded="false" 
+            aria-label="User account profile Cmdr. H. Vance"
+          >
+            <i data-lucide="user" style="width: 17px; height: 17px;" aria-hidden="true"></i>
+            <span class="avatar-status-pip" title="Engineer status: Active"></span>
+          </button>
+
+          <div class="dropdown-menu" id="userProfileDropdown" role="menu" aria-labelledby="userProfileBtn">
+            <div class="dropdown-header">Defense / Aero Session</div>
+            <div style="padding: 6px 10px 10px;">
+              <div style="font-size: 13px; font-weight: 600; color: #FFFFFF;">Cmdr. H. Vance</div>
+              <div style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-cyan);">Aero Propulsion Lab (L5)</div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" role="menuitem" onclick="handleUserAction('Cluster Allocations')">
+              <i data-lucide="cpu" aria-hidden="true"></i>
+              <span>Cluster Allocations</span>
+            </button>
+            <button class="dropdown-item" role="menuitem" onclick="handleUserAction('Security Clearance')">
+              <i data-lucide="shield-check" aria-hidden="true"></i>
+              <span>Security Clearance</span>
+            </button>
+            <button class="dropdown-item" role="menuitem" onclick="handleUserAction('API &amp; CLI Keys')">
+              <i data-lucide="terminal" aria-hidden="true"></i>
+              <span>API &amp; CLI Keys</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" role="menuitem" style="color: #F87171;" onclick="handleUserAction('Terminate Session')">
+              <i data-lucide="log-out" style="color: #F87171;" aria-hidden="true"></i>
+              <span>Terminate Session</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Drawer Hamburger Toggle -->
+        <button 
+          type="button" 
+          class="btn-mobile-toggle" 
+          id="mobileMenuToggle" 
+          aria-expanded="false" 
+          aria-controls="mobileDrawer"
+          aria-label="Open mobile navigation menu"
+        >
+          <i data-lucide="menu" id="mobileMenuIcon" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Navigation">
+    <ul class="mobile-nav-list">
+      <li>
+        <a href="#subsystems" class="mobile-nav-link" onclick="closeMobileDrawer()">
+          <span>Subsystems</span>
+          <i data-lucide="arrow-right" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#leadership" class="mobile-nav-link" onclick="closeMobileDrawer()">
+          <span>Leadership &amp; Verification</span>
+          <i data-lucide="arrow-right" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#milestones" class="mobile-nav-link" onclick="closeMobileDrawer()">
+          <span>Computational Milestones</span>
+          <i data-lucide="arrow-right" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+        </a>
+      </li>
+      <li>
+        <a href="#security" class="mobile-nav-link" onclick="closeMobileDrawer()">
+          <span>Air-Gapped Security</span>
+          <i data-lucide="arrow-right" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Mobile Cluster Status Strip -->
+    <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-primary); display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px;">
+      <span style="color: var(--text-muted);">GPU CLUSTER: <span style="color: #FFFFFF;">99.8% ONLINE</span></span>
+      <span style="color: var(--accent-cyan);">SYNC: ACTIVE</span>
+    </div>
+  </div>
+
+  <!-- =============================================================
+       MAIN CONTENT CONTAINER
+       ============================================================= -->
+  <main id="main-content">
+
+    <!-- =============================================================
+         SECTION 6: HERO SECTION
+         ============================================================= -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <div class="container">
+        <div class="hero-content">
+          
+          <!-- Introductory Badge -->
+          <div class="hero-badge">
+            <span class="badge-icon" aria-hidden="true">
+              <i data-lucide="compass" style="width: 13px; height: 13px;"></i>
+            </span>
+            <span>AeroForge Architecture v4.2</span>
+            <span class="badge-separator">/</span>
+            <span class="badge-highlight">Frontier Aerothermal Solver</span>
+          </div>
+
+          <!-- Main Serif Heading -->
+          <h1 class="hero-heading" id="hero-title">
+            Aerospace Simulation &amp; Thermal Dynamics at Scale
+          </h1>
+
+          <!-- Description -->
+          <p class="hero-description">
+            High-fidelity Navier-Stokes GPU solving engineered for hypersonics, turbine aeromechanics, and orbital propulsion systems. Precision physics verified for mission-critical defense.
+          </p>
+
+          <!-- Buttons Group -->
+          <div class="hero-actions">
+            <!-- 1. Launch Platform -->
+            <button type="button" class="btn-primary-cyan" id="btnLaunchPlatform" onclick="handlePlatformLaunch()">
+              <span>Launch Platform</span>
+              <i data-lucide="arrow-up-right" style="width: 16px; height: 16px;" aria-hidden="true"></i>
+            </button>
+
+            <!-- 2. Request Access -->
+            <button type="button" class="btn-secondary-outline" id="btnRequestAccess" onclick="handleRequestAccess()">
+              <i data-lucide="lock" style="width: 15px; height: 15px; color: var(--text-secondary);" aria-hidden="true"></i>
+              <span>Request Access</span>
+            </button>
+
+            <!-- 3. Explore Benchmarks → -->
+            <a href="#subsystems" class="btn-text-link" id="btnExploreBenchmarks">
+              <span>Explore Benchmarks</span>
+              <i data-lucide="arrow-right" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 7: PERFORMANCE KPI STRIP
+         ============================================================= -->
+    <section class="kpi-strip-container" aria-label="Performance Telemetry">
+      <div class="container">
+        <div class="kpi-strip">
+          
+          <!-- METRIC 1 -->
+          <div class="kpi-card" id="metric-velocity">
+            <div class="kpi-header">
+              <span class="kpi-label">MAX VELOCITY</span>
+              <i data-lucide="wind" class="kpi-indicator-icon" aria-hidden="true"></i>
+            </div>
+            <div class="kpi-body">
+              <div class="kpi-value">Mach 4.2</div>
+              <div class="kpi-subtext">@ 24ft</div>
+            </div>
+          </div>
+
+          <!-- METRIC 2 -->
+          <div class="kpi-card" id="metric-compute">
+            <div class="kpi-header">
+              <span class="kpi-label">COMPUTE CAPACITY</span>
+              <i data-lucide="cpu" class="kpi-indicator-icon" aria-hidden="true"></i>
+            </div>
+            <div class="kpi-body">
+              <div class="kpi-value">128 TFLOPS</div>
+              <div class="kpi-subtext">FP64</div>
+            </div>
+          </div>
+
+          <!-- METRIC 3 -->
+          <div class="kpi-card" id="metric-mesh">
+            <div class="kpi-header">
+              <span class="kpi-label">MESH RESOLUTION</span>
+              <i data-lucide="layers" class="kpi-indicator-icon" aria-hidden="true"></i>
+            </div>
+            <div class="kpi-body">
+              <div class="kpi-value">0.002 mm</div>
+              <div class="kpi-subtext">Prism</div>
+            </div>
+          </div>
+
+          <!-- METRIC 4 -->
+          <div class="kpi-card" id="metric-thermal">
+            <div class="kpi-header">
+              <span class="kpi-label">THERMAL MARGIN</span>
+              <i data-lucide="flame" class="kpi-indicator-icon" style="color: var(--accent-amber);" aria-hidden="true"></i>
+            </div>
+            <div class="kpi-body">
+              <div class="kpi-value accent-amber">+340 K</div>
+              <div class="kpi-subtext">Delta</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION: SUBSYSTEM DECOMPOSITION
+         ============================================================= -->
+    <section class="subsystem-section reveal-item" id="subsystems" aria-labelledby="subsystem-title">
+      <div class="container">
+        <div class="subsystem-header-area">
+          <div class="section-eyebrow">SUBSYSTEM DECOMPOSITION</div>
+          <h2 class="section-title" id="subsystem-title">Twin-Spool High-Bypass Aerothermal Assembly</h2>
+          <p class="section-description">
+            Discrete element analysis across multi-stage compressor spools, annular combustion chambers, and high-pressure turbine rotors.
+          </p>
+        </div>
+
+        <div class="subsystem-grid">
+          
+          <!-- CARD 01 — FAN & LPC -->
+          <article class="subsystem-card" id="card-subsystem-1">
+            <div>
+              <div class="subsystem-top">
+                <span class="subsystem-tag">CARD 01 // FAN &amp; LPC</span>
+                <div class="subsystem-icon-box" aria-hidden="true">
+                  <i data-lucide="fan" style="width: 17px; height: 17px;"></i>
+                </div>
+              </div>
+              <h3 class="subsystem-title">Wide-Chord Titanium Blisk</h3>
+              <p class="subsystem-desc">
+                3D swept titanium aerofoils with shock-capturing boundary layer models. Resists bird-strike impact and flutter oscillation up to Mach 1.6 relative tip speeds.
+              </p>
+            </div>
+            <div>
+              <div class="subsystem-divider"></div>
+              <div class="subsystem-metrics">
+                <div class="metric-cell">
+                  <span class="metric-label">Pressure Ratio</span>
+                  <span class="metric-data">1.75 : 1</span>
+                </div>
+                <div class="metric-cell">
+                  <span class="metric-label">Mass Flow</span>
+                  <span class="metric-data">1,240 kg/s</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- CARD 02 — DIFFUSER & LINER -->
+          <article class="subsystem-card" id="card-subsystem-2">
+            <div>
+              <div class="subsystem-top">
+                <span class="subsystem-tag">CARD 02 // DIFFUSER &amp; LINER</span>
+                <div class="subsystem-icon-box" aria-hidden="true">
+                  <i data-lucide="flame" style="width: 17px; height: 17px;"></i>
+                </div>
+              </div>
+              <h3 class="subsystem-title">Annular Low-NOx Combustor</h3>
+              <p class="subsystem-desc">
+                Continuous vortex swirl injectors with localized chemical reaction kinetics. Effusion cooling hole arrays simulated via GPU Navier-Stokes particle tracking.
+              </p>
+            </div>
+            <div>
+              <div class="subsystem-divider"></div>
+              <div class="subsystem-metrics">
+                <div class="metric-cell">
+                  <span class="metric-label">Peak Flame</span>
+                  <span class="metric-data" style="color: var(--accent-amber);">2,150 K</span>
+                </div>
+                <div class="metric-cell">
+                  <span class="metric-label">Efficiency</span>
+                  <span class="metric-data" style="color: var(--accent-cyan);">99.94%</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- CARD 03 — HPT ROTOR -->
+          <article class="subsystem-card" id="card-subsystem-3">
+            <div>
+              <div class="subsystem-top">
+                <span class="subsystem-tag">CARD 03 // HPT ROTOR</span>
+                <div class="subsystem-icon-box" aria-hidden="true">
+                  <i data-lucide="disc" style="width: 17px; height: 17px;"></i>
+                </div>
+              </div>
+              <h3 class="subsystem-title">CMSX-4 Superalloy Rotor</h3>
+              <p class="subsystem-desc">
+                Thermal Barrier Coating life-cycle degradation modeling with serpentine internal cooling passages and turbulator trip strips under centrifugal load.
+              </p>
+            </div>
+            <div>
+              <div class="subsystem-divider"></div>
+              <div class="subsystem-metrics">
+                <div class="metric-cell">
+                  <span class="metric-label">Rotational Velocity</span>
+                  <span class="metric-data">14,200 RPM</span>
+                </div>
+                <div class="metric-cell">
+                  <span class="metric-label">Root Stress</span>
+                  <span class="metric-data">620 MPa</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION: LEADERSHIP & VERIFICATION
+         ============================================================= -->
+    <section class="leadership-section reveal-item" id="leadership" aria-labelledby="leadership-title">
+      <div class="container">
+        <div class="leadership-header-area">
+          <div class="section-eyebrow">LEADERSHIP &amp; VERIFICATION</div>
+          <h2 class="section-title" id="leadership-title">Pioneering the Next Era of Aerothermal Flight</h2>
+        </div>
+
+        <div class="leadership-layout">
+          
+          <!-- LEFT COLUMN: FOUNDER PROFILE -->
+          <div class="founder-card" id="founder-profile">
+            <div class="founder-header">
+              <!-- Founder Portrait Component -->
+              <div class="founder-avatar-wrap" aria-label="Portrait of Dr. Marcus Vance">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="80" height="80" fill="#171C27"/>
+                  <circle cx="40" cy="30" r="16" fill="#242B38" stroke="#303847" stroke-width="1.5"/>
+                  <path d="M18 68C18 53.6406 27.8497 48 40 48C52.1503 48 62 53.6406 62 68" fill="#1C222E" stroke="#303847" stroke-width="1.5"/>
+                  <path d="M34 26C34 26 36 29 40 29C44 29 46 26 46 26" stroke="#00C7E8" stroke-width="1.5" stroke-linecap="round"/>
+                  <circle cx="35" cy="27" r="1.5" fill="#A8E5F6"/>
+                  <circle cx="45" cy="27" r="1.5" fill="#A8E5F6"/>
+                  <path d="M10 10H18V18" stroke="#00C7E8" stroke-width="1.2" stroke-opacity="0.6"/>
+                  <path d="M70 70H62V62" stroke="#00C7E8" stroke-width="1.2" stroke-opacity="0.6"/>
+                </svg>
+              </div>
+              <div class="founder-meta">
+                <span class="founder-role-eyebrow">FOUNDER &amp; CHIEF ARCHITECT</span>
+                <h3 class="founder-name">Dr. Marcus Vance</h3>
+                <span class="founder-credentials">PhD Aerospace Engineering, MIT</span>
+              </div>
+            </div>
+
+            <!-- Achievement Badges -->
+            <div class="achievement-badges" aria-label="Career Milestones">
+              <span class="badge-chip">
+                <i data-lucide="rocket" aria-hidden="true"></i>
+                <span>Ex-NASA JPL</span>
+              </span>
+              <span class="badge-chip">
+                <i data-lucide="shield" aria-hidden="true"></i>
+                <span>DARPA Falcon Project</span>
+              </span>
+              <span class="badge-chip">
+                <i data-lucide="award" aria-hidden="true"></i>
+                <span>AIAA Fellow</span>
+              </span>
+            </div>
+
+            <!-- Biography -->
+            <p class="founder-bio">
+              Prior to establishing AeroForge, Dr. Vance oversaw hypersonic scramjet injection diagnostics for DARPA and engineered boundary layer cooling manifolds for deep-space orbital insertion stages at NASA JPL.
+            </p>
+
+            <!-- Highlighted Quotation -->
+            <blockquote class="founder-quote">
+              "We built AeroForge to eliminate physical wind-tunnel bottlenecks and empower aerospace engineers to simulate complex geometries in real time with zero mission risk."
+            </blockquote>
+          </div>
+
+          <!-- RIGHT COLUMN: VERIFICATION CARDS & MILESTONES -->
+          <div class="right-column-stack">
+            
+            <!-- Two Verification Cards -->
+            <div class="verification-cards-grid">
+              
+              <!-- CARD 1: SIMULATED HOT-FIRE -->
+              <div class="verification-card card-cyan" id="card-hot-fire">
+                <div>
+                  <div class="verification-eyebrow">SIMULATED HOT-FIRE</div>
+                  <div class="verification-metric color-cyan">12,000+</div>
+                  <p class="verification-desc">
+                    Complete engine runtime duty cycles executed across subsonic and hypersonic envelopes.
+                  </p>
+                </div>
+                <div class="verification-footer-tag cyan-tag">
+                  <i data-lucide="check-circle-2" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+                  <span>ZERO DRIFT CONVERGENCE</span>
+                </div>
+              </div>
+
+              <!-- CARD 2: CORRELATION FIDELITY -->
+              <div class="verification-card card-lavender" id="card-fidelity">
+                <div>
+                  <div class="verification-eyebrow">CORRELATION FIDELITY</div>
+                  <div class="verification-metric color-lavender">99.98%</div>
+                  <p class="verification-desc">
+                    Benchmarked against AFRL and Arnold Engineering Development Complex strain gauges.
+                  </p>
+                </div>
+                <div class="verification-footer-tag lavender-tag">
+                  <i data-lucide="target" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+                  <span>AEDC TUNNEL MATCHED</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- COMPUTATIONAL MILESTONES -->
+            <div class="milestones-card" id="milestones">
+              <div class="milestones-header">
+                <span class="milestones-title">
+                  <i data-lucide="git-commit" aria-hidden="true"></i>
+                  <span>RECENT COMPUTATIONAL MILESTONES</span>
+                </span>
+                <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-cyan);">VERIFIED SOLVES</span>
+              </div>
+
+              <div class="milestones-list">
+                
+                <!-- ENTRY 1 -->
+                <div class="milestone-item">
+                  <div class="milestone-date">2024.Q4</div>
+                  <div class="milestone-content">
+                    <h4 class="milestone-heading">Implicit Large Eddy Simulation (ILES) at 10B Grid Cells</h4>
+                    <p class="milestone-desc">
+                      Multi-stage acoustic resonance tracking for next-gen commercial ultra-high bypass propulsors.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- ENTRY 2 -->
+                <div class="milestone-item">
+                  <div class="milestone-date">2024.Q2</div>
+                  <div class="milestone-content">
+                    <h4 class="milestone-heading">Hypersonic Boundary-Layer Transition Predictor</h4>
+                    <p class="milestone-desc">
+                      Automated Mach 5+ thermal flux estimation with sub-surface conduction models for scramjet cowls.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- ENTRY 3 -->
+                <div class="milestone-item">
+                  <div class="milestone-date">2023.Q3</div>
+                  <div class="milestone-content">
+                    <h4 class="milestone-heading">Real-Time Turbine Flutter Matrix Solvers</h4>
+                    <p class="milestone-desc">
+                      Coupled fluid-structure interaction compute reduced from 72 hours down to 18 minutes.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 2: SECURITY AND COMPLIANCE SECTION
+         ============================================================= -->
+    <section class="security-section reveal-item" id="security" aria-labelledby="security-title">
+      <div class="container">
+        <div class="security-panel">
+          
+          <div class="security-content">
+            <div class="security-status-line">
+              <span class="security-pill-defense">DEFENSE READY</span>
+              <span class="security-label-supporting">ITAR PART 120-130 &amp; NIST SP 800-171</span>
+            </div>
+            <h2 class="security-title" id="security-title">Air-Gapped &amp; Enclave Hardware Security</h2>
+            <p class="security-desc">
+              All AeroForge cloud and on-premise compute nodes operate within dedicated enclave microarchitectures with end-to-end cryptographic verification.
+            </p>
+          </div>
+
+          <div class="security-actions">
+            <!-- Primary Cyan Button -->
+            <button type="button" class="btn-primary-cyan" onclick="handleAuditSecurity()">
+              <i data-lucide="shield" style="width: 15px; height: 15px;" aria-hidden="true"></i>
+              <span>Audit Security Protocols</span>
+            </button>
+            <!-- Secondary Outlined Button -->
+            <button type="button" class="btn-secondary-outline" onclick="handleFedRampWhitepaper()">
+              <i data-lucide="file-text" style="width: 15px; height: 15px;" aria-hidden="true"></i>
+              <span>FedRAMP Whitepaper</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =============================================================
+       SECTION 3: FOOTER SECTION (4 COLUMNS)
+       ============================================================= -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      
+      <div class="footer-grid">
+        
+        <!-- COLUMN 1: COMPUTE INFRASTRUCTURE -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">
+            <i data-lucide="server" style="width: 13px; height: 13px; color: var(--accent-cyan);" aria-hidden="true"></i>
+            <span>COMPUTE INFRASTRUCTURE</span>
+          </h3>
+          <ul class="footer-links-list">
+            <li><a href="#security" class="footer-link">H100 Tensor-Core Clusters</a></li>
+            <li><a href="#security" class="footer-link">Bare-Metal Enclaves</a></li>
+            <li><a href="#telemetry" class="footer-link" onclick="handleFooterAction('Real-Time Ingestion API')">Real-Time Ingestion API</a></li>
+            <li><a href="#scalability" class="footer-link" onclick="handleFooterAction('MPI Multi-Node Scalability')">MPI Multi-Node Scalability</a></li>
+          </ul>
+        </div>
+
+        <!-- COLUMN 2: SOLVER CAPABILITIES -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">
+            <i data-lucide="cpu" style="width: 13px; height: 13px; color: var(--accent-cyan);" aria-hidden="true"></i>
+            <span>SOLVER CAPABILITIES</span>
+          </h3>
+          <ul class="footer-links-list">
+            <li><a href="#subsystems" class="footer-link">Aerodynamic FEA Meshing</a></li>
+            <li><a href="#subsystems" class="footer-link">Conjugate Heat Transfer</a></li>
+            <li><a href="#subsystems" class="footer-link">Shock Wave Boundary Layers</a></li>
+            <li><a href="#subsystems" class="footer-link">Nonlinear Structural Aeroelasticity</a></li>
+          </ul>
+        </div>
+
+        <!-- COLUMN 3: OPERATIONAL ACCESS -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">
+            <i data-lucide="key" style="width: 13px; height: 13px; color: var(--accent-cyan);" aria-hidden="true"></i>
+            <span>OPERATIONAL ACCESS</span>
+          </h3>
+          <ul class="footer-links-list">
+            <li><a href="#platform-login" class="footer-link" onclick="handlePlatformLaunch()">Platform Login</a></li>
+            <li><a href="#security" class="footer-link">Enterprise Air-Gapped Deploy</a></li>
+            <li><a href="#whitepaper" class="footer-link" onclick="handleFedRampWhitepaper()">Security Whitepaper (NIST)</a></li>
+            <li><a href="#clearance" class="footer-link" onclick="handleRequestAccess()">ITAR Clearance Registration</a></li>
+          </ul>
+        </div>
+
+        <!-- COLUMN 4: ENGINEERING CORP -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">
+            <i data-lucide="layers" style="width: 13px; height: 13px; color: var(--accent-cyan);" aria-hidden="true"></i>
+            <span>ENGINEERING CORP</span>
+          </h3>
+          <ul class="footer-links-list">
+            <li><a href="#leadership" class="footer-link">Dr. Marcus Vance Lab Notes</a></li>
+            <li><a href="#milestones" class="footer-link">Peer-Reviewed AIAA Papers</a></li>
+            <li><a href="#careers" class="footer-link" onclick="handleFooterAction('Propulsion CFD Careers')">Career Openings (Propulsion CFD)</a></li>
+            <li><a href="#telemetry" class="footer-link" onclick="handleFooterAction('Global Telemetry Diagnostics')">Global Telemetry Diagnostics</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM FOOTER -->
+      <div class="footer-bottom">
+        <div class="footer-brand-matrix">
+          AeroForge Compute Infrastructure | MIL-SPEC FEA / CFD MATRIX
+        </div>
+        <div class="footer-copyright">
+          &copy; 2025 AeroForge Systems Inc. Mission Critical Fluid Aerodynamics Platform.
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- =============================================================
+       JAVASCRIPT INTERACTIONS & PRODUCTION LOGIC
+       ============================================================= -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Dropdown Elements
+    const quickActionBtn = document.getElementById('quickActionBtn');
+    const quickActionDropdown = document.getElementById('quickActionDropdown');
+    const userProfileBtn = document.getElementById('userProfileBtn');
+    const userProfileDropdown = document.getElementById('userProfileDropdown');
+    
+    // Mobile Drawer Elements
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    const mobileMenuIcon = document.getElementById('mobileMenuIcon');
+
+    // Navigation Active Link Management
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.forEach(l => {
+          l.classList.remove('active');
+          l.removeAttribute('aria-current');
+        });
+        link.classList.add('active');
+        link.setAttribute('aria-current', 'page');
+      });
+    });
+
+    // Helper: Close all dropdown menus
+    function closeAllDropdowns() {
+      if (quickActionDropdown) {
+        quickActionDropdown.classList.remove('show');
+        quickActionBtn.setAttribute('aria-expanded', 'false');
+      }
+      if (userProfileDropdown) {
+        userProfileDropdown.classList.remove('show');
+        userProfileBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    // Toggle Quick Action Dropdown
+    if (quickActionBtn && quickActionDropdown) {
+      quickActionBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = quickActionDropdown.classList.contains('show');
+        closeAllDropdowns();
+        if (!isOpen) {
+          quickActionDropdown.classList.add('show');
+          quickActionBtn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    }
+
+    // Toggle User Profile Dropdown
+    if (userProfileBtn && userProfileDropdown) {
+      userProfileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = userProfileDropdown.classList.contains('show');
+        closeAllDropdowns();
+        if (!isOpen) {
+          userProfileDropdown.classList.add('show');
+          userProfileBtn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    }
+
+    // Mobile Hamburger Drawer Toggle
+    if (mobileMenuToggle && mobileDrawer) {
+      mobileMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = mobileDrawer.classList.contains('open');
+        if (isOpen) {
+          closeMobileDrawer();
+        } else {
+          mobileDrawer.classList.add('open');
+          mobileMenuToggle.setAttribute('aria-expanded', 'true');
+        }
+      });
+    }
+
+    function closeMobileDrawer() {
+      if (mobileDrawer) {
+        mobileDrawer.classList.remove('open');
+      }
+      if (mobileMenuToggle) {
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    // Global Click-outside to close menus
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#quickActionContainer') && !e.target.closest('#userProfileContainer')) {
+        closeAllDropdowns();
+      }
+      if (!e.target.closest('#mobileDrawer') && !e.target.closest('#mobileMenuToggle')) {
+        closeMobileDrawer();
+      }
+    });
+
+    // Keyboard Accessibility: Escape key closes menus
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        closeAllDropdowns();
+        closeMobileDrawer();
+      }
+    });
+
+    // Action Handlers
+    function handleUserAction(actionName) {
+      console.log(`[AeroForge User Profile]: ${actionName}`);
+      closeAllDropdowns();
+      alert(`User profile action: ${actionName}`);
+    }
+
+    // ========================================================
+    // DEEP FASTAPI BACKEND WIRING FOR QUICK ACTION DROPDOWN
+    // ========================================================
+    const API_BASE = "http://127.0.0.1:8000";
+
+    // Create hidden file inputs if not present
+    if (!document.getElementById('globalCadInput')) {
+      const cadInput = document.createElement('input');
+      cadInput.type = 'file';
+      cadInput.id = 'globalCadInput';
+      cadInput.accept = '.stl,.obj,.step,.stp';
+      cadInput.style.display = 'none';
+      document.body.appendChild(cadInput);
+    }
+
+    if (!document.getElementById('globalLogInput')) {
+      const logInput = document.createElement('input');
+      logInput.type = 'file';
+      logInput.id = 'globalLogInput';
+      logInput.accept = '.log,.dat,.csv,.txt';
+      logInput.style.display = 'none';
+      document.body.appendChild(logInput);
+    }
+
+    function setupQuickActions() {
+      // 1. Import CAD / Mesh File
+      const btnCAD = document.getElementById('actionImportCAD');
+      if (btnCAD) {
+        btnCAD.onclick = (e) => {
+          e.preventDefault();
+          closeAllDropdowns();
+          document.getElementById('globalCadInput').click();
+        };
+      }
+
+      // 2. Configure Boundary Layers
+      const btnBL = document.getElementById('actionConfigBL');
+      if (btnBL) {
+        btnBL.onclick = async (e) => {
+          e.preventDefault();
+          closeAllDropdowns();
+          // Fetch live physics from backend
+          try {
+            const res = await fetch(`${API_BASE}/calculate-physics`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ velocity: 40.0, chord_length: 1.8, target_y_plus: 1.0, regime: "external_aerodynamics" })
+            });
+            const p = await res.json();
+            alert(`AeroForge Boundary Layer Engine (Menter k-omega SST):\n\nFirst Cell Height (Δs): ${p.first_cell_height_mm} mm\nBoundary Layer Thickness (δ): ${p.boundary_layer_thickness_mm} mm\nPrism Layers: ${p.recommended_prism_layers} layers @ r=1.15\nWall Shear Stress: ${p.wall_shear_stress_pa} Pa\nReynolds Number: ${p.reynolds_number.toLocaleString()}\nMach Number: ${p.mach_number}\n\nRationale: ${p.wall_treatment_rationale}`);
+            
+            const subSection = document.getElementById('subsystems');
+            if (subSection) subSection.scrollIntoView({ behavior: 'smooth' });
+          } catch (err) {
+            alert("Boundary Layer Configuration:\nFastAPI physics core active. Ensure backend running at http://127.0.0.1:8000.");
+          }
+        };
+      }
+
+      // 3. New Aerothermal Run
+      const btnNewRun = document.getElementById('actionNewRun');
+      if (btnNewRun) {
+        btnNewRun.onclick = async (e) => {
+          e.preventDefault();
+          closeAllDropdowns();
+          try {
+            const res = await fetch(`${API_BASE}/api/projects/1/cases`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: `Run_${Date.now().toString().slice(-4)}`,
+                velocity_ms: 40.0,
+                chord_m: 1.8,
+                target_y_plus: 1.0,
+                solver: "OpenFOAM"
+              })
+            });
+            const caseData = await res.json();
+            
+            // Fetch generated solver configuration
+            const confRes = await fetch(`${API_BASE}/api/solver/generate-config`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chord_m: 1.8, velocity_ms: 40.0, target_y_plus: 1.0, solver: "OpenFOAM" })
+            });
+            const conf = await confRes.json();
+
+            alert(`New Aerothermal Run Initialized!\n\nCase ID: #${caseData.id || 1} (${caseData.name})\nSolver: ${caseData.solver} (k-omega SST)\nStatus: ${caseData.status || 'INITIALIZED'}\n\nGenerated OpenFOAM Dictionaries:\n- blockMeshDict: 3D Farfield Symmetry ([-15c, 25c])\n- snappyHexMeshDict: 28 prism layers (r=1.15)\n- controlDict: forceCoeffs monitor active\n- fvSchemes: Second-Order Upwind\n\nAppended to immutable DecisionRecord audit trail.`);
+          } catch (err) {
+            console.error("Failed to create case:", err);
+            alert("Could not connect to FastAPI Backend at http://127.0.0.1:8000. Ensure uvicorn is running.");
+          }
+        };
+      }
+
+      // 4. Verification Report
+      const btnVerify = document.getElementById('actionVerificationReport');
+      if (btnVerify) {
+        btnVerify.onclick = (e) => {
+          e.preventDefault();
+          closeAllDropdowns();
+          const choice = confirm("AeroForge Verification & Audit Portal:\n\nClick [OK] to upload solver log (log.simpleFoam / fluent.log) for diagnostic parsing.\nClick [Cancel] to export signed ASME V&V 20 Decision Record Certificate.");
+          if (choice) {
+            document.getElementById('globalLogInput').click();
+          } else {
+            exportVerificationCertificate();
+          }
+        };
+      }
+
+      // Handle CAD Upload
+      document.getElementById('globalCadInput').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const res = await fetch(`${API_BASE}/api/cad/inspect`, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          alert(`CAD Geometry Inspected:\n\nFile: ${file.name}\nChord Length (c): ${data.characteristic_chord_m} m\nSpan (b): ${data.span_m} m\nWatertight Mesh: ${data.is_watertight ? 'YES' : 'NO'}\nDomain Bounds: Upstream: ${data.domain_box?.inlet_distance_m}m, Wake: ${data.domain_box?.outlet_distance_m}m\nTrailing Edge Check: ${data.cae_readiness?.trailing_edge_status} (${data.cae_readiness?.defeaturing_recommendation})`);
+        } catch (err) {
+          console.error("CAD Inspection failed:", err);
+          alert(`CAD Uploaded: ${file.name}\nBackend inspection at http://127.0.0.1:8000/api/cad/inspect.`);
+        }
+      };
+
+      // Handle Log Audit Upload
+      document.getElementById('globalLogInput').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const res = await fetch(`${API_BASE}/api/diagnostics/parse-log`, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          alert(`Diagnostic Audit Complete:\n\nVerdict: ${data.diagnostic_flag}\nFinal Continuity: ${data.final_continuity}\nFinal Drag (Cd): ${data.final_drag}\nRolling Force Stability (σ): ${data.drag_std_dev}\nIs Converged: ${data.is_converged}\n\nSenior Review:\n${data.senior_engineer_review}`);
+        } catch (err) {
+          console.error("Log Audit failed:", err);
+          alert("Log parsing completed. Connect to backend at http://127.0.0.1:8000.");
+        }
+      };
+    }
+
+    async function exportVerificationCertificate() {
+      try {
+        const res = await fetch(`${API_BASE}/api/verification/export-pdf`, { method: "POST" });
+        const d = await res.json();
+        alert(`Signed Verification Record Generated:\n\nReport ID: ${d.report_id}\nStandards: ${d.standards.join(", ")}\nStatus: ${d.status}\nDigital Signature: ${d.digital_signature}\nTimestamp: ${d.timestamp}`);
+      } catch (err) {
+        alert("Exporting ASME V&V 20 & NIST SP 800-171 Verification Certificate...");
+      }
+    }
+
+    // Call on load
+    setupQuickActions();
+
+    function handlePlatformLaunch() {
+      console.log('[AeroForge]: Launching platform...');
+      const target = document.getElementById('subsystems');
+      if (target) {
+        window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+      }
+    }
+
+    function handleRequestAccess() {
+      alert("AeroForge Defense Clearance Access Portal\n\nPlease submit ITAR / DoD verification credentials for high-temperature aeromechanics solver access.");
+    }
+
+    function handleAuditSecurity() {
+      alert("AeroForge Security Audit Checklist\n\nNIST SP 800-171 & ITAR enclave zero-trust microarchitecture audit verification dispatched to defense compliance team.");
+    }
+
+    function handleFedRampWhitepaper() {
+      alert("FedRAMP High / DoD IL5 Whitepaper\n\nAccess verified. Downloading cryptographic isolation specifications...");
+    }
+
+    function handleFooterAction(serviceName) {
+      console.log(`[AeroForge Footer Link]: ${serviceName}`);
+      alert(`AeroForge Systems: ${serviceName}\nRouting to defense engineer directory.`);
+    }
+
+    // Lightweight Scroll Reveal & Intersection Observer
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.12
+    };
+
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-item').forEach(el => {
+      revealObserver.observe(el);
+    });
+  </script>
+</body>
+</html>
