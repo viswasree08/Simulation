@@ -99,28 +99,37 @@ mergePatchPairs
 """
 
 def generate_surface_features_dict(stl_filename: str = "wing.stl") -> str:
+    """
+    Generate system/surfaceFeatureExtractDict for OpenFOAM v2212 (OpenCFD/ESI).
+    Extracts feature lines from closed manifold STL surfaces into .eMesh files.
+    """
     return f"""/*--------------------------------*- C++ -*----------------------------------*\\
 | =========                 |                                                 |
 | \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
 |  \\\\    /   O peration     | Version:  v2212                                 |
-|   \\\\  /    A nd           | Case:     surfaceFeaturesDict                   |
-|    \\\\/     M anipulation  | Target:   constant/triSurface/{stl_filename}   |
+|   \\\\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\\\/     M anipulation  | Case:     surfaceFeatureExtractDict             |
 \\*---------------------------------------------------------------------------*/
 FoamFile
 {{
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      surfaceFeaturesDict;
+    location    "system";
+    object      surfaceFeatureExtractDict;
+}}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+{stl_filename}
+{{
+    extractionMethod    extractFromSurface;
+    includedAngle       150;
+    geometricTestOnly   yes;
+    intersectionMethod  none;
+    writeObj            yes;
 }}
 
-surfaces
-(
-    "{stl_filename}"
-    {{
-        includedAngle   150;
-    }}
-);
+// ************************************************************************* //
 """
 
 def generate_snappy_hex_mesh_dict(stl_filename: str = "wing.stl", layers: int = 28, first_cell_mm: float = 0.0084) -> str:
@@ -311,6 +320,10 @@ functions
 """
 
 def generate_fv_schemes() -> str:
+    """
+    Generate system/fvSchemes for OpenFOAM v2212.
+    Includes mandatory wallDist calculation required for SST k-omega turbulence modeling.
+    """
     return """/*--------------------------------*- C++ -*----------------------------------*\\
 | =========                 |                                                 |
 | \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
@@ -319,51 +332,62 @@ def generate_fv_schemes() -> str:
 |    \\\\/     M anipulation  | Schemes:  Second-Order Upwind (linearUpwind)    |
 \\*---------------------------------------------------------------------------*/
 FoamFile
-{{
+{
     version     2.0;
     format      ascii;
     class       dictionary;
     location    "system";
     object      fvSchemes;
-}}
+}
 
 ddtSchemes
-{{
+{
     default         steadyState;
-}}
+}
 
 gradSchemes
-{{
+{
     default         Gauss linear;
     grad(U)         cellLimited Gauss linear 1;
-}}
+}
 
 divSchemes
-{{
+{
     default         none;
     div(phi,U)      bounded Gauss linearUpwind grad(U);
-    div(phi,k)      bounded Gauss upwind;
-    div(phi,omega)  bounded Gauss upwind;
+    turbulence      bounded Gauss upwind;
+    div(phi,k)      $turbulence;
+    div(phi,omega)  $turbulence;
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
-}}
+}
 
 laplacianSchemes
-{{
+{
     default         Gauss linear corrected;
-}}
+}
 
 interpolationSchemes
-{{
+{
     default         linear;
-}}
+}
 
 snGradSchemes
-{{
+{
     default         corrected;
-}}
+}
+
+wallDist
+{
+    method          meshWave;
+}
+
+// ************************************************************************* //
 """
 
 def generate_fv_solution() -> str:
+    """
+    Generate system/fvSolution for OpenFOAM v2212 SIMPLE algorithm.
+    """
     return """/*--------------------------------*- C++ -*----------------------------------*\\
 | =========                 |                                                 |
 | \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
@@ -372,57 +396,59 @@ def generate_fv_solution() -> str:
 |    \\\\/     M anipulation  | Solver:   SIMPLE                                |
 \\*---------------------------------------------------------------------------*/
 FoamFile
-{{
+{
     version     2.0;
     format      ascii;
     class       dictionary;
     location    "system";
     object      fvSolution;
-}}
+}
 
 solvers
-{{
+{
     p
-    {{
+    {
         solver          GAMG;
         tolerance       1e-06;
         relTol          0.01;
         smoother        GaussSeidel;
-    }}
+    }
 
     "(U|k|omega)"
-    {{
+    {
         solver          smoothSolver;
         smoother        GaussSeidel;
         tolerance       1e-06;
         relTol          0.1;
-    }}
-}}
+    }
+}
 
 SIMPLE
-{{
+{
     nNonOrthogonalCorrectors 0;
     consistent      yes;
     residualControl
-    {{
+    {
         p               1e-5;
         U               1e-5;
         "(k|omega)"     1e-5;
-    }}
-}}
+    }
+}
 
 relaxationFactors
-{{
+{
     equations
-    {{
+    {
         U               0.7;
         k               0.7;
         omega           0.7;
-    }}
+    }
     fields
-    {{
+    {
         p               0.3;
-    }}
-}}
+    }
+}
+
+// ************************************************************************* //
 """
 

@@ -1,4 +1,11 @@
-KNOWLEDGE_BASE = {
+"""
+Verified Knowledge Glossary Engine.
+Authoritative, peer-reviewed aerothermal, CFD, and ASME V&V 20 definitions.
+"""
+
+from typing import Dict, Any, Optional
+
+KNOWLEDGE_BASE: Dict[str, Dict[str, str]] = {
     "reynolds": {
         "term_id": "reynolds",
         "title": "Reynolds Number (Re)",
@@ -35,19 +42,37 @@ KNOWLEDGE_BASE = {
         "failure_modes": "Excessive turbulent kinetic energy generation in stagnation regions without Kato-Launder limiter.",
         "reference": "Menter, F. R. (1994). Two-Equation Eddy-Viscosity Turbulence Models for Engineering Applications. AIAA Journal."
     },
-    "second_order_upwind": {
-        "term_id": "second_order_upwind",
-        "title": "Second-Order Upwind Discretization",
-        "equation_latex": "\\phi_f = \\phi_C + \\nabla \\phi_C \\cdot \\vec{r}",
-        "definition": "Spatial discretization scheme computing face quantities via multidimensional linear reconstruction from the cell center.",
-        "governing_conditions": "Mandatory for final production CFD cases to eliminate first-order numerical false diffusion.",
-        "failure_modes": "First-order upwind artificially diffuses boundary layers and premature separation bubbles; limiters required for monotonicity near shocks.",
-        "reference": "Versteeg, H. K., & Malalasekera, W. (2007). An Introduction to Computational Fluid Dynamics."
+    "linear_upwind": {
+        "term_id": "linear_upwind",
+        "title": "Bounded Linear Upwind Discretization",
+        "equation_latex": "\\phi_f = \\phi_U + \\nabla \\phi_U \\cdot (\\vec{x}_f - \\vec{x}_U)",
+        "definition": "Second-order spatial discretization scheme with gradient reconstruction from the upwind cell center, enforcing boundedness via TVD slope limiters.",
+        "governing_conditions": "Mandatory for production aerodynamic CFD to eliminate first-order numerical diffusion while preventing unphysical oscillations.",
+        "failure_modes": "First-order upwind smears boundary layers and trailing edge wake vortices; unbounded second-order schemes may produce dispersion ripples.",
+        "reference": "Versteeg, H. K., & Malalasekera, W. (2007). An Introduction to Computational Fluid Dynamics. Pearson."
+    },
+    "blockage_ratio": {
+        "term_id": "blockage_ratio",
+        "title": "Wind Tunnel Blockage Ratio (B)",
+        "equation_latex": "B = \\frac{A_{\\text{model}}}{A_{\\text{domain}}} \\times 100\\%",
+        "definition": "Ratio of the frontal projected cross-sectional area of the test model to the cross-sectional area of the farfield computational domain.",
+        "governing_conditions": "Must remain below 1.5% to 3.0% for unbounded external aerodynamics simulations without requiring empirical blockage corrections.",
+        "failure_modes": "Excessive blockage artificially accelerates bypass flow, increases suction peaks, and overpredicts lift and pressure drag.",
+        "reference": "Barlow, J. B., Rae, W. H., & Pope, A. (1999). Low-Speed Wind Tunnel Testing. John Wiley & Sons."
+    },
+    "false_convergence": {
+        "term_id": "false_convergence",
+        "title": "False Convergence Diagnostic",
+        "equation_latex": "\\Delta \\phi = \\phi^k - \\phi^{k-1} \\to 0 \\quad \\text{while} \\quad R(\\phi^k) = \\|A\\phi^k - b\\| > \\epsilon",
+        "definition": "Condition where iterative solution updates become negligibly small while actual governing Navier-Stokes residuals remain stalled or elevated.",
+        "governing_conditions": "Commonly occurs under severe under-relaxation (e.g., α_p < 0.1) or with inappropriate turbulence wall damping.",
+        "failure_modes": "Accepting stalled solutions leads to inaccurate force polars and undetected flow separations masked by artificial numerical damping.",
+        "reference": "Ferziger, J. H., & Peric, M. (2002). Computational Methods for Fluid Dynamics. Springer."
     },
     "roache_gci": {
         "term_id": "roache_gci",
         "title": "Roache Grid Convergence Index (GCI)",
-        "equation_latex": "GCI = \\frac{F_s |\\epsilon|}{r^p - 1}, \\quad \\epsilon = \\frac{f_2 - f_1}{f_1}",
+        "equation_latex": "GCI_{\\text{fine}} = \\frac{F_s |\\epsilon_{21}|}{r^p - 1} \\times 100\\%, \\quad \\epsilon_{21} = \\left|\\frac{f_2 - f_1}{f_1}\\right|",
         "definition": "ASME V&V 20 standard metric quantifying spatial discretization uncertainty across systematically refined grid triplets.",
         "governing_conditions": "Requires consistent grid refinement ratio r ≥ 1.3 across at least 3 geometrically similar meshes.",
         "failure_modes": "Calculating GCI without verifying asymptotic convergence range (observed order p matching theoretical order) invalidates error bands.",
@@ -55,3 +80,6 @@ KNOWLEDGE_BASE = {
     }
 }
 
+def get_concept(term_id: str) -> Optional[Dict[str, str]]:
+    """Retrieve concept definition from knowledge base."""
+    return KNOWLEDGE_BASE.get(term_id)

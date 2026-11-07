@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, BackgroundTasks
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -9,7 +10,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from models import SessionLocal, Project, SimulationCase, DecisionRecord
-from knowledge_engine import KNOWLEDGE_BASE
+from knowledge_engine import KNOWLEDGE_BASE, get_concept
 from ai_copilot import evaluate_copilot_case
 from cfd_visualizer import parse_vtk_polydata, generate_sample_naca0012_vtk
 from openfoam_pipeline import (
@@ -26,6 +27,30 @@ from solver_generator import (
     generate_control_dict,
     generate_fv_schemes,
     generate_fv_solution
+)
+from cad_engine import inspect_geometry
+from aerocore import compute_physics as aerocore_compute_physics, calculate_roache_gci
+from case_builder import build_case_directory
+
+import engineering_core
+from api_schemas import (
+    CaseInput,
+    HandCalculationReport,
+    PhysicsOutput,
+    AtmosphereRequest,
+    AtmosphereResponse,
+    TurbulenceInletRequest,
+    TurbulenceInletResponse,
+    WallTreatmentRequest,
+    WallTreatmentResponse,
+    DomainSizingRequest,
+    DomainSizingResponse,
+    SnappyLayersRequest,
+    SnappyLayersResponse,
+    GciRequestDTO,
+    GciResponseDTO,
+    AsmeValidationRequest,
+    AsmeValidationResponse
 )
 
 app = FastAPI(
@@ -87,45 +112,6 @@ if db_init.query(Project).count() == 0:
     db_init.commit()
 db_init.close()
 
-class CaseInput(BaseModel):
-    velocity: float
-    chord_length: float
-    fluid_density: float = 1.225
-    viscosity: float = 1.789e-5
-    target_y_plus: float = 1.0
-    regime: str = "external_aerodynamics"
-
-class HandCalculationReport(BaseModel):
-    reynolds_number: float
-    dynamic_pressure_pa: float
-    skin_friction_coeff: float
-    wall_shear_stress_pa: float
-    friction_velocity_ms: float
-    first_cell_height_mm: float
-    boundary_layer_thickness_mm: float
-    estimated_friction_drag_n_per_m: float
-    theoretical_cl_alpha_per_deg: float
-    theoretical_cl_at_4deg: float
-    expected_cd0_range: str
-
-class PhysicsOutput(BaseModel):
-    reynolds_number: float
-    mach_number: float
-    flow_regime: str
-    boundary_layer_thickness_mm: float
-    skin_friction_coeff: float
-    wall_shear_stress_pa: float
-    friction_velocity_ms: float
-    first_cell_height_mm: float
-    recommended_prism_layers: int
-    recommended_growth_rate: float
-    inlet_distance_m: float
-    outlet_distance_m: float
-    lateral_distance_m: float
-    recommended_turbulence_model: str
-    wall_treatment_rationale: str
-    hand_calculation: HandCalculationReport
-
 class DiagnosticReport(BaseModel):
     total_iterations: int
     final_continuity: float
@@ -175,83 +161,42 @@ def compute_physics(velocity: float, chord_length: float, target_y_plus: float, 
     if velocity <= 0 or chord_length <= 0:
         raise HTTPException(status_code=400, detail="Velocity and chord length must be strictly positive.")
 
-    fluid_density = 1.225
-    viscosity = 1.789e-5
+    try:
+        p = aerocore_compute_physics(velocity, chord_length, target_y_plus, regime)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    re_val = (fluid_density * velocity * chord_length) / viscosity
-    mach = velocity / 340.3
-    q = 0.5 * fluid_density * (velocity ** 2)
-
-    if regime == "internal_nozzle":
-        cf = 0.079 * (re_val ** -0.25)
-        tau_w = q * cf
-        u_tau = math.sqrt(tau_w / fluid_density)
-        delta_s_m = (target_y_plus * viscosity) / (fluid_density * u_tau)
-        delta_m = 0.5 * chord_length
-        f_drag = 2.0 * q * chord_length * cf
-        cl_slope = 0.0
-        cl_4deg = 0.0
-        cd0_str = f"{cf:.5f} (Internal Pipe Friction Factor)"
-        inlet = chord_length * 5.0
-        outlet = chord_length * 8.0
-        lateral = chord_length * 2.5
-        regime_desc = "Internal Compressible Flow"
-    else:
-        cf = 0.0583 * (re_val ** -0.2)
-        tau_w = q * cf
-        u_tau = math.sqrt(tau_w / fluid_density)
-        delta_s_m = (target_y_plus * viscosity) / (fluid_density * u_tau)
-        delta_m = (0.37 * chord_length) / (re_val ** 0.2)
-        f_drag = 2.0 * q * chord_length * cf
-        cl_slope = 0.11
-        cl_4deg = cl_slope * 4.0
-        cd0_str = "0.0060 - 0.0085 (Typical Aerofoil Parasite Cd0)"
-        inlet = chord_length * 15.0
-        outlet = chord_length * 25.0
-        lateral = chord_length * 15.0
-        regime_desc = "Incompressible Fully Turbulent Flow" if mach < 0.3 else "Compressible Subsonic Flow"
-
-    delta_s_mm = delta_s_m * 1000.0
-    delta_mm = delta_m * 1000.0
-    layers = 28 if target_y_plus <= 1.0 else 12
-
+    hc = p["hand_calculation"]
     hand_calc = HandCalculationReport(
-        reynolds_number=round(re_val, 2),
-        dynamic_pressure_pa=round(q, 2),
-        skin_friction_coeff=float(f"{cf:.6f}"),
-        wall_shear_stress_pa=round(tau_w, 3),
-        friction_velocity_ms=round(u_tau, 3),
-        first_cell_height_mm=round(delta_s_mm, 5),
-        boundary_layer_thickness_mm=round(delta_mm, 2),
-        estimated_friction_drag_n_per_m=round(f_drag, 2),
-        theoretical_cl_alpha_per_deg=round(cl_slope, 3),
-        theoretical_cl_at_4deg=round(cl_4deg, 3),
-        expected_cd0_range=cd0_str
-    )
-
-    rationale = (
-        f"Wall-Resolved formulation (y+ = {target_y_plus:.1f}): Near-wall viscous sublayer "
-        "is resolved without empirical wall functions. Required for SST k-omega."
-        if target_y_plus <= 1.0 else
-        f"Wall-Function formulation (y+ = {target_y_plus:.1f}): First node placed in log-law layer (30 < y+ < 300)."
+        reynolds_number=hc["reynolds_number"],
+        dynamic_pressure_pa=hc["dynamic_pressure_pa"],
+        skin_friction_coeff=hc["skin_friction_coeff"],
+        wall_shear_stress_pa=hc["wall_shear_stress_pa"],
+        friction_velocity_ms=hc["friction_velocity_ms"],
+        first_cell_height_mm=hc["first_cell_height_mm"],
+        boundary_layer_thickness_mm=hc["boundary_layer_thickness_mm"],
+        estimated_friction_drag_n_per_m=hc["estimated_friction_drag_n_per_m"],
+        theoretical_cl_alpha_per_deg=hc["theoretical_cl_alpha_per_deg"],
+        theoretical_cl_at_4deg=hc["theoretical_cl_at_4deg"],
+        expected_cd0_range=hc["expected_cd0_range"]
     )
 
     return PhysicsOutput(
-        reynolds_number=round(re_val, 2),
-        mach_number=round(mach, 3),
-        flow_regime=regime_desc,
-        boundary_layer_thickness_mm=round(delta_mm, 2),
-        skin_friction_coeff=float(f"{cf:.6f}"),
-        wall_shear_stress_pa=round(tau_w, 3),
-        friction_velocity_ms=round(u_tau, 3),
-        first_cell_height_mm=round(delta_s_mm, 5),
-        recommended_prism_layers=layers,
-        recommended_growth_rate=1.15,
-        inlet_distance_m=round(inlet, 2),
-        outlet_distance_m=round(outlet, 2),
-        lateral_distance_m=round(lateral, 2),
-        recommended_turbulence_model="k-omega SST (Menter)",
-        wall_treatment_rationale=rationale,
+        reynolds_number=p["reynolds_number"],
+        mach_number=p["mach_number"],
+        flow_regime=p["flow_regime"],
+        boundary_layer_thickness_mm=p["boundary_layer_thickness_mm"],
+        skin_friction_coeff=p["skin_friction_coeff"],
+        wall_shear_stress_pa=p["wall_shear_stress_pa"],
+        friction_velocity_ms=p["friction_velocity_ms"],
+        first_cell_height_mm=p["first_cell_height_mm"],
+        recommended_prism_layers=p["recommended_prism_layers"],
+        recommended_growth_rate=p["recommended_growth_rate"],
+        inlet_distance_m=p["inlet_distance_m"],
+        outlet_distance_m=p["outlet_distance_m"],
+        lateral_distance_m=p["lateral_distance_m"],
+        recommended_turbulence_model=p["recommended_turbulence_model"],
+        wall_treatment_rationale=p["wall_treatment_rationale"],
         hand_calculation=hand_calc
     )
 
@@ -353,39 +298,14 @@ def update_case(case_id: int, payload: UpdateCaseDTO, db: Session = Depends(get_
 async def inspect_cad_geometry(file: UploadFile = File(...)):
     filename = file.filename or "geometry.stl"
     contents = await file.read()
+    if not contents or len(contents) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded CAD file is empty.")
     
-    # Analyze ASCII or binary STL for characteristic bounding dimensions
-    chord_estimate = 1.8
-    span_estimate = 2.0
-    is_watertight = True
-    te_status = "PASS"
-
-    if filename.lower().endswith(".stl"):
-        # Check if ASCII STL with vertices
-        text = contents[:2000].decode("utf-8", errors="ignore")
-        if "vertex" in text.lower():
-            coords_x = [float(x) for x in re.findall(r'vertex\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)', text)]
-            if coords_x:
-                span_diff = max(coords_x) - min(coords_x)
-                if span_diff > 0.05:
-                    chord_estimate = round(span_diff, 3)
-
-    return {
-        "filename": filename,
-        "characteristic_chord_m": chord_estimate,
-        "span_m": span_estimate,
-        "is_watertight": is_watertight,
-        "domain_box": {
-            "inlet_distance_m": round(chord_estimate * 15.0, 2),
-            "outlet_distance_m": round(chord_estimate * 25.0, 2),
-            "lateral_distance_m": round(chord_estimate * 15.0, 2)
-        },
-        "cae_readiness": {
-            "trailing_edge_thickness_mm": 0.5,
-            "trailing_edge_status": te_status,
-            "defeaturing_recommendation": "Verified: Sharp TE resolves without blunt separation anomaly."
-        }
-    }
+    try:
+        metrics = inspect_geometry(contents, filename)
+        return metrics
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"CAD inspection failed: {str(e)}")
 
 @app.post("/api/solver/generate-config")
 def generate_solver_config(payload: SolverConfigDTO):
@@ -443,6 +363,57 @@ def get_sample_cfd_vtk(chord_m: float = 1.0, span_m: float = 2.0, u_inf: float =
         "scalar_stats": parsed["scalar_stats"],
         "available_fields": list(parsed["scalars"].keys())
     }
+
+
+# ==========================================
+# MODULE 2: Automated OpenFOAM Case Builder Endpoint
+# ==========================================
+@app.post("/api/cases/{case_id}/build-files")
+def build_openfoam_case_files(case_id: int, db: Session = Depends(get_db)):
+    c = db.query(SimulationCase).filter(SimulationCase.id == case_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail=f"Simulation case #{case_id} not found.")
+
+    try:
+        result = build_case_directory(
+            case_id=c.id,
+            base_dir=CASES_DIR,
+            chord_m=c.chord_m,
+            velocity_ms=c.velocity_ms,
+            target_y_plus=c.target_y_plus,
+            regime=c.regime or "external_aerodynamics",
+            stl_filename="wing.stl"
+        )
+        c.pipeline_step = "CASE_BUILT"
+        dec = DecisionRecord(
+            project_id=c.project_id,
+            actor="Case Builder",
+            summary=f"Generated OpenFOAM 3D directory for Case #{c.id} ({len(result['generated_files'])} files, ZIP created)"
+        )
+        db.add(dec)
+        db.commit()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to build OpenFOAM case files: {str(e)}")
+
+@app.get("/api/cases/{case_id}/download-case")
+def download_case_zip(case_id: int, db: Session = Depends(get_db)):
+    c = db.query(SimulationCase).filter(SimulationCase.id == case_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    zip_path = os.path.join(CASES_DIR, f"case_{case_id}.zip")
+    if not os.path.exists(zip_path):
+        build_case_directory(
+            case_id=c.id,
+            base_dir=CASES_DIR,
+            chord_m=c.chord_m,
+            velocity_ms=c.velocity_ms,
+            target_y_plus=c.target_y_plus,
+            regime=c.regime or "external_aerodynamics",
+            stl_filename="wing.stl"
+        )
+    return FileResponse(zip_path, filename=f"case_{case_id}.zip", media_type="application/zip")
 
 # ==========================================
 # OpenFOAM Pipeline Endpoints
@@ -568,9 +539,15 @@ async def parse_simulation_log(file: UploadFile = File(...), case_id: Optional[i
             except ValueError:
                 continue
 
-    if iterations == 0: iterations = len(continuity_vals) if continuity_vals else 500
-    final_cont = continuity_vals[-1] if continuity_vals else 8.4e-6
-    final_cd = cd_vals[-1] if cd_vals else 0.00845
+        # Strict validation: file must not be empty or have zero iterations
+    if not continuity_vals or iterations == 0:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "INVALID_LOG_FORMAT: Could not parse numerical iteration history."}
+        )
+
+    final_cont = continuity_vals[-1]
+    final_cd = cd_vals[-1] if cd_vals else 0.0
 
     sample_cd = cd_vals[-50:] if len(cd_vals) >= 50 else (cd_vals if cd_vals else [final_cd])
     mean_cd = sum(sample_cd) / len(sample_cd)
@@ -580,11 +557,11 @@ async def parse_simulation_log(file: UploadFile = File(...), case_id: Optional[i
     if final_cont <= 1e-4 and drag_std < 1e-4:
         is_conv = True
         flag = "PASSED: True Asymptotic Convergence"
-        review = f"Continuity residuals achieved monotonic decay ({final_cont:.2e}), and force monitors demonstrate stability with rolling standard deviation σ = {drag_std:.6f}."
+        review = f"Continuity residuals achieved monotonic decay ({final_cont:.2e}), and force monitors demonstrate stability with rolling standard deviation = {drag_std:.6f}."
     elif final_cont <= 1e-4 and drag_std >= 1e-4:
         is_conv = False
         flag = "ANOMALY: Residual Convergence with Force Oscillation"
-        review = f"Residuals met numerical criteria ({final_cont:.2e}), but surface force monitors oscillate (σ = {drag_std:.6f}). Physical unsteadiness (vortex shedding) detected. Steady RANS is unphysical; transition to Transient."
+        review = f"Residuals met numerical criteria ({final_cont:.2e}), but surface force monitors oscillate ( = {drag_std:.6f}). Physical unsteadiness (vortex shedding) detected. Steady RANS is unphysical; transition to Transient."
     else:
         is_conv = False
         flag = "STALLED: Incomplete Residual Decay"
@@ -618,4 +595,129 @@ async def parse_simulation_log(file: UploadFile = File(...), case_id: Optional[i
         is_converged=is_conv,
         diagnostic_flag=flag,
         senior_engineer_review=review
+    )
+
+
+# ============================================================
+# Engineering Core Direct Scientific Endpoints
+# ============================================================
+
+@app.post("/api/engineering/atmosphere", response_model=AtmosphereResponse)
+def get_isa_atmosphere_endpoint(payload: AtmosphereRequest):
+    """
+    Compute U.S. Standard Atmosphere (1976) conditions up to 11,000m (Troposphere).
+    Deterministic scientific calculation without AI heuristics.
+    """
+    try:
+        return engineering_core.standard_atmosphere_isa(altitude_m=payload.altitude_m)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+
+@app.post("/api/engineering/turbulence/inlet", response_model=TurbulenceInletResponse)
+def get_turbulence_inlet_endpoint(payload: TurbulenceInletRequest):
+    """
+    Derive Menter k-omega SST inflow boundary parameters (k, omega, epsilon, nut).
+    """
+    try:
+        return engineering_core.turbulence_inlet_boundary_conditions(
+            velocity_ms=payload.velocity_ms,
+            turbulent_intensity_percent=payload.turbulent_intensity_percent,
+            turbulent_length_scale_m=payload.turbulent_length_scale_m,
+            viscosity_ratio=payload.viscosity_ratio
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+
+@app.post("/api/engineering/turbulence/wall-treatment", response_model=WallTreatmentResponse)
+def evaluate_wall_treatment_endpoint(payload: WallTreatmentRequest):
+    """
+    Assess near-wall formulation and flag invalid buffer-layer regimes (5 <= y+ <= 30).
+    """
+    try:
+        return engineering_core.assess_wall_treatment(target_y_plus=payload.target_y_plus)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+
+@app.post("/api/engineering/mesh/domain-bounds", response_model=DomainSizingResponse)
+def calculate_domain_bounds_endpoint(payload: DomainSizingRequest):
+    """
+    Calculate 3D external aerodynamic wind tunnel domain sizing based on AIAA DPW guidelines.
+    """
+    try:
+        return engineering_core.calculate_external_aero_domain_bounds(
+            chord_m=payload.chord_m,
+            inlet_factor=payload.inlet_factor,
+            outlet_factor=payload.outlet_factor,
+            lateral_factor=payload.lateral_factor,
+            span_m=payload.span_m
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+
+@app.post("/api/engineering/mesh/snappy-layers", response_model=SnappyLayersResponse)
+def calculate_snappy_layers_endpoint(payload: SnappyLayersRequest):
+    """
+    Compute mathematically consistent snappyHexMesh boundary layer controls.
+    """
+    try:
+        return engineering_core.calculate_snappy_hex_mesh_layers(
+            first_cell_m=payload.first_cell_m,
+            num_layers=payload.num_layers,
+            expansion_ratio=payload.expansion_ratio
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+
+@app.post("/api/engineering/verification/asme-vv20", response_model=AsmeValidationResponse)
+def evaluate_asme_vv20_validation_endpoint(payload: AsmeValidationRequest):
+    """
+    Perform ASME V&V 20-2009 validation check comparing simulation vs benchmark data with uncertainty.
+    """
+    try:
+        return engineering_core.asme_vv20_validation_comparison(
+            s_val=payload.simulation_val,
+            d_val=payload.benchmark_val,
+            u_num=payload.u_num,
+            u_input=payload.u_input,
+            u_data=payload.u_data
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+
+@app.post("/api/cases/{case_id}/gci", response_model=GciResponseDTO)
+def calculate_gci_for_case(case_id: int, payload: GciRequestDTO, db: Session = Depends(get_db)):
+    try:
+        res = calculate_roache_gci(
+            f_coarse=payload.f_coarse,
+            f_medium=payload.f_medium,
+            f_fine=payload.f_fine,
+            r=payload.r
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    c = db.query(SimulationCase).filter(SimulationCase.id == case_id).first()
+    if c:
+        dec = DecisionRecord(
+            project_id=c.project_id,
+            actor="GCI Auditor",
+            summary=f"ASME V&V 20 GCI for Case #{case_id}: Order p={res['apparent_order_p']}, GCI_fine={res['gci_fine_percent']}%, Verdict={res['verdict']}"
+        )
+        db.add(dec)
+        db.commit()
+
+    return GciResponseDTO(
+        apparent_order_p=res["apparent_order_p"],
+        theoretical_order=res["theoretical_order"],
+        relative_error_eps21_percent=res["relative_error_eps21_percent"],
+        gci_fine_percent=res["gci_fine_percent"],
+        is_asymptotic_range=res["is_asymptotic_range"],
+        verdict=res["verdict"],
+        recommendation=res["recommendation"]
     )

@@ -116,3 +116,4 @@ def test_e2e_openfoam_and_vtk_pipeline():
     print(f"Surface Cp Range: [{cp_stats['min']:.3f}, {cp_stats['max']:.3f}]")
 
     print("\n>>> All Automated End-to-End OpenFOAM & VTK Tests PASSED! <<<")
+

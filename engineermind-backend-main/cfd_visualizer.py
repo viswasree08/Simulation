@@ -248,3 +248,4 @@ def generate_sample_naca0012_vtk(chord_m: float = 1.0, span_m: float = 2.0, u_in
         lines.append(f"{u[0]} {u[1]} {u[2]}")
 
     return "\n".join(lines)
+

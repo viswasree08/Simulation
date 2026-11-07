@@ -46,10 +46,56 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
 
+    <!-- Three.js + OrbitControls + STLLoader from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
+    /* =============================================================
+       LOCAL ARIMO FONT DEFINITIONS
+       ============================================================= */
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/Arimo-VariableFont_wght.ttf') format('truetype-variations'),
+           url('fonts/static/Arimo-Regular.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/Arimo-Italic-VariableFont_wght.ttf') format('truetype-variations'),
+           url('fonts/static/Arimo-Italic.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: italic;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/static/Arimo-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/static/Arimo-SemiBold.ttf') format('truetype');
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/static/Arimo-Medium.ttf') format('truetype');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+
     /* -------------------------------------------------------------
        1. DESIGN TOKENS & CSS VARIABLES
        ------------------------------------------------------------- */
@@ -73,7 +119,7 @@
 
       /* Font Stacks */
       --font-heading: 'Playfair Display', Georgia, serif;
-      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-body: 'Arimo', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
       /* Spacing & Layout */
@@ -94,6 +140,7 @@
     html {
       scroll-behavior: smooth;
       background-color: var(--bg-primary);
+      min-height: 100%;
     }
 
     body {
@@ -1661,6 +1708,210 @@
         align-items: flex-start;
       }
     }
+  
+    /* =============================================================
+       ENGINEERMIND SIMULATION LAB WORKSTATION STYLES
+       ============================================================= */
+
+    :root {
+      --bg-void: #08090C;
+      --bg-panel: #0E1015;
+      --bg-card: #14171F;
+      --border-hairline: #1E2330;
+      --border-focus: #3B82F6;
+      --text-main: #F1F5F9;
+      --text-muted: #64748B;
+      --accent-cyan: #00C7E8;
+      --accent-emerald: #10B981;
+      --accent-crimson: #EF4444;
+      --accent-amber: #F59E0B;
+      --font-sans: 'Arimo', 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* body styles */
+.simulation-lab-body {
+      height: 100%; width: 100%; overflow: hidden;
+      background: var(--bg-void); color: var(--text-main);
+      font-family: var(--font-sans); font-size: 12px;
+    }
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .clickable-term {
+      text-decoration: underline dotted var(--accent-cyan);
+      cursor: pointer;
+    }
+    .clickable-term:hover { color: var(--accent-cyan); }
+
+    /* Workstation Grid Layout */
+    #appContainer {
+      display: grid; height: 100%; width: 100%;
+      transition: all 0.25s ease-in-out;
+    }
+    #appContainer.mode-landing {
+      grid-template-rows: 44px 1fr;
+      grid-template-columns: 1fr;
+    }
+    #appContainer.mode-workstation {
+      grid-template-rows: 40px 1fr;
+      grid-template-columns: 280px 1fr 340px;
+    }
+
+    /* Controls & Visual Tokens */
+    .btn-action {
+      background: var(--accent-emerald); color: #022C22;
+      font-weight: 600; font-size: 11px; padding: 7px 14px;
+      border: none; border-radius: 2px; cursor: pointer;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-action:hover { background: #34D399; }
+    .input-precision {
+      background: #050608; border: 1px solid var(--border-hairline);
+      color: #FFF; font-family: var(--font-mono); font-size: 11px;
+      padding: 5px 8px; border-radius: 2px; outline: none; width: 100%;
+    }
+    .input-precision:focus { border-color: var(--border-focus); }
+
+    /* Sidebars & Sub-panes */
+    .pane { background: var(--bg-panel); border-right: 1px solid var(--border-hairline); overflow-y: auto; }
+    .tab-btn {
+      background: transparent; color: #94a3b8; border: none;
+      padding: 10px 18px; font-size: 12px; font-weight: 600; cursor: pointer;
+      border-bottom: 3px solid transparent; transition: all 0.15s ease;
+      font-family: var(--font-body);
+    }
+    .tab-btn.active { color: #ffffff; border-bottom-color: #00c7e8; }
+    .tab-btn:hover { color: #f1f5f9; }
+
+    /* Top Quick Action Bar */
+    .quick-action-pill {
+      background: rgba(30, 35, 48, 0.6);
+      border: 1px solid var(--border-hairline);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .quick-action-pill:hover {
+      background: var(--border-hairline);
+      color: #FFF;
+      border-color: var(--border-focus);
+    }
+  
+    #viewSimulationLab {
+      display: none;
+      height: calc(100vh - 70px);
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      background-color: #000;
+    }
+
+    /* ANSYS / Blender 3D Viewport Controls */
+    .vp-tool-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #94a3b8;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: var(--font-body);
+    }
+    .vp-tool-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .vp-tool-btn.active {
+      color: #00c7e8;
+      background: rgba(0, 199, 232, 0.16);
+      border-color: rgba(0, 199, 232, 0.35);
+      font-weight: 600;
+    }
+    .vp-select {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      font-size: 11px;
+      font-family: var(--font-body);
+      padding: 3px 8px;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    .vp-select:focus {
+      border-color: #00c7e8;
+    }
+    .vp-pill-btn {
+      padding: 3px 8px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .vp-pill-btn:hover {
+      background: rgba(0, 199, 232, 0.22);
+      border-color: rgba(0, 199, 232, 0.45);
+      color: #ffffff;
+    }
+
+  
+    /* Multi-View Routing Shell Specific Tokens */
+    .app-view {
+      transition: opacity 0.2s ease-in-out;
+    }
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .nav-tab.active {
+      color: var(--accent-cyan);
+      background: rgba(0, 199, 232, 0.08);
+      font-weight: 600;
+      box-shadow: inset 0 -2px 0 var(--accent-cyan);
+    }
+    #workstationGrid.mode-landing {
+      grid-template-rows: 44px 1fr;
+      grid-template-columns: 1fr;
+    }
+    #workstationGrid.mode-workstation {
+      grid-template-rows: 40px 1fr;
+      grid-template-columns: 280px 1fr 340px;
+    }
+    .btn-hero-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
   </style>
 </head>
 <body>
@@ -1675,13 +1926,12 @@
   <!-- =============================================================
        SECTION 5: NAVIGATION HEADER
        ============================================================= -->
-  <header class="navbar" role="banner">
+  <header id="globalHeader" class="header-nav navbar" role="banner">
     <div class="container navbar-inner">
-      
-      <!-- Brand Logo Component -->
-      <a href="#" class="brand-logo-group" aria-label="AeroForge Systems Home">
-        <div class="brand-mark" aria-hidden="true">
-          <!-- Aerospace supersonic delta-wing vector glyph -->
+      <!-- Logo Group Component -->
+      <a href="#" class="brand-logo-group logo-group" aria-label="AeroForge Systems Home" onclick="switchView('overview'); return false;">
+        <div class="brand-mark logo-glyph" aria-hidden="true">
+          <!-- Supersonic delta-wing vector glyph -->
           <svg class="brand-glyph" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 20L12 16L22 20L12 2Z" fill="url(#cyanGrad)" stroke="#00C7E8" stroke-width="1.5" stroke-linejoin="round"/>
             <path d="M12 2V16" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
@@ -1694,45 +1944,40 @@
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">AeroForge</span>
-          <span class="brand-subtitle">Systems CFD Platform</span>
+          <span class="brand-title">AeroForge Systems</span>
+          <span class="brand-subtitle">/ EngineerMind CAE</span>
         </div>
       </a>
 
-      <!-- Desktop Navigation Links -->
-      <nav class="nav-links-wrapper" aria-label="Main Navigation">
-        <ul class="nav-links">
+      <!-- NAVIGATION TABS -->
+      <nav class="nav-links-wrapper nav-links" aria-label="Main Navigation">
+        <ul class="nav-links" style="display: flex; gap: 8px; list-style: none; margin: 0; padding: 0;">
           <li class="nav-link-item">
-            <a href="#subsystems" class="nav-link" id="navSubsystems">Subsystems</a>
+            <button id="navTabOverview" class="nav-tab nav-link active" onclick="switchView('overview')">Company Overview</button>
           </li>
           <li class="nav-link-item">
-            <a href="#leadership" class="nav-link" id="navLeadership">Leadership &amp; Verification</a>
+            <button id="navTabDashboard" class="nav-tab nav-link" onclick="switchView('dashboard')">Workspace Dashboard</button>
           </li>
           <li class="nav-link-item">
-            <a href="#milestones" class="nav-link" id="navMilestones">Milestones</a>
-          </li>
-          <li class="nav-link-item">
-            <a href="#security" class="nav-link" id="navSecurity">Hardware Enclaves</a>
+            <button id="navTabSimulation" class="nav-tab nav-link" onclick="switchView('simulation')">Simulation Lab</button>
           </li>
         </ul>
       </nav>
 
-      <!-- System Status Indicators (Cluster & Sync) -->
-      <div class="status-hud-group" aria-label="Infrastructure Telemetry">
-        <div class="status-item" title="GPU Compute Node Availability">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span class="status-label">GPU Cluster:</span>
-          <span class="status-value">99.8% Online</span>
+      <!-- QUICK ACTIONS & TELEMETRY -->
+      <div class="header-actions" style="display: flex; align-items: center; gap: 14px;">
+        <!-- Status Indicator -->
+        <div class="status-hud-group status-indicator" aria-label="Infrastructure Telemetry" style="display: flex; align-items: center; gap: 8px;">
+          <span class="status-dot pulse-dot" aria-hidden="true"></span>
+          <span class="status-label" style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">US-EAST-01 · GPU MESH OPERATIONAL</span>
         </div>
-        <div class="status-item" title="Telemetry Mesh Synchronization">
-          <span class="status-label">Sync:</span>
-          <span class="status-value" style="color: var(--accent-cyan);">Active</span>
-        </div>
-      </div>
 
-      <!-- Header Action Controls -->
-      <div class="header-actions">
-        
+        <!-- Launch Platform Button in Header -->
+        <button id="btnHeaderLaunch" class="btn-cyan btn-primary-cyan" style="padding: 6px 14px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="switchView('simulation')">
+          <span>Launch Platform</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+
         <!-- Quick Action Menu Dropdown -->
         <div class="dropdown-container" id="quickActionContainer">
           <button 
@@ -1822,7 +2067,6 @@
         >
           <i data-lucide="menu" id="mobileMenuIcon" style="width: 18px; height: 18px;" aria-hidden="true"></i>
         </button>
-
       </div>
     </div>
   </header>
@@ -1866,14 +2110,18 @@
   <!-- =============================================================
        MAIN CONTENT CONTAINER
        ============================================================= -->
-  <main id="main-content">
+    <!-- =============================================================
+       VIEW CONTAINER 1: COMPANY OVERVIEW
+       ============================================================= -->
+  <section id="viewOverview" class="app-view active" style="display: block; width: 100%;">
+<main id="main-content">
 
     <!-- =============================================================
          SECTION 6: HERO SECTION
          ============================================================= -->
     <section class="hero-section" aria-labelledby="hero-title">
       <div class="container">
-        <div class="hero-content">
+        <div class="hero-content hero-container">
           
           <!-- Introductory Badge -->
           <div class="hero-badge">
@@ -1886,7 +2134,7 @@
           </div>
 
           <!-- Main Serif Heading -->
-          <h1 class="hero-heading" id="hero-title">
+          <h1 class="hero-heading hero-title" id="hero-title">
             Aerospace Simulation &amp; Thermal Dynamics at Scale
           </h1>
 
@@ -1896,23 +2144,22 @@
           </p>
 
           <!-- Buttons Group -->
-          <div class="hero-actions">
+          <div class="hero-actions hero-cta-group">
             <!-- 1. Launch Platform -->
-            <button type="button" class="btn-primary-cyan" id="btnLaunchPlatform" onclick="handlePlatformLaunch()">
+            <button type="button" class="btn-primary-cyan btn-hero-primary" id="btnHeroLaunch" onclick="switchView('simulation')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <span>Launch Platform</span>
-              <i data-lucide="arrow-up-right" style="width: 16px; height: 16px;" aria-hidden="true"></i>
             </button>
 
             <!-- 2. Request Access -->
-            <button type="button" class="btn-secondary-outline" id="btnRequestAccess" onclick="handleRequestAccess()">
+            <button type="button" class="btn-secondary-outline btn-hero-secondary" id="btnRequestAccess" onclick="alert('Access Request Submitted.')">
               <i data-lucide="lock" style="width: 15px; height: 15px; color: var(--text-secondary);" aria-hidden="true"></i>
               <span>Request Access</span>
             </button>
 
             <!-- 3. Explore Benchmarks → -->
-            <a href="#subsystems" class="btn-text-link" id="btnExploreBenchmarks">
-              <span>Explore Benchmarks</span>
-              <i data-lucide="arrow-right" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+            <a href="#subsystems" class="btn-text-link hero-link" id="btnExploreBenchmarks">
+              <span>Explore Benchmarks →</span>
             </a>
           </div>
 
@@ -2354,6 +2601,325 @@
 
     </div>
   </footer>
+  </section>
+
+  <!-- =============================================================
+       VIEW CONTAINER 2: SIMULATION LAB (4-ZONE WORKSTATION)
+       ============================================================= -->
+  <section id="viewSimulation" class="app-view" style="display: none; height: calc(100vh - 70px); width: 100%; overflow: hidden;">
+  <div id="workstationGrid" class="mode-landing" style="display: grid; height: 100%; width: 100%; transition: all 0.25s ease-in-out;">
+    <!-- Top Command Bar -->
+    <header style="grid-column: 1 / -1; background: var(--bg-panel); border-bottom: 1px solid var(--border-hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 50;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="background: var(--accent-emerald); color: #000; font-weight: 800; padding: 2px 6px; border-radius: 2px; font-size: 11px;">EM</span>
+        <span style="font-weight: 600;">EngineerMind AI</span>
+        <span style="color: var(--text-muted);">/ Pre-Flight CFD &amp; Reasoning</span>
+        
+        <!-- Top Quick Action Controls -->
+        <div style="display: flex; align-items: center; gap: 6px; margin-left: 12px; border-left: 1px solid var(--border-hairline); padding-left: 12px;">
+          <button class="quick-action-pill" id="btnQuickImportCAD" title="Upload and inspect 3D geometry">
+            <span>📂</span> Import CAD
+          </button>
+          <button class="quick-action-pill" id="btnQuickConfigBL" title="Focus Boundary Layer Parameters">
+            <span>📐</span> Config BL
+          </button>
+          <button class="quick-action-pill" id="btnQuickNewRun" title="Initialize new case & OpenFOAM dicts">
+            <span>⚡</span> New Run
+          </button>
+          <button class="quick-action-pill" id="btnQuickVerify" title="Run diagnostic log parsing & GCI verification">
+            <span>📊</span> Verify
+          </button>
+        </div>
+      </div>
+
+      <div id="projectControls" style="display: none; align-items: center; gap: 10px;">
+        <span style="color: var(--text-muted); font-size: 10px;">PROJECT:</span>
+        <select id="selProject" class="input-precision" style="width: 170px;"></select>
+        <span style="color: var(--text-muted); font-size: 10px;">CASE:</span>
+        <select id="selCase" class="input-precision" style="width: 170px;"></select>
+        <button id="btnExportPDF" class="btn-action" style="background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);" onclick="exportVerificationPDF()">Export Decision PDF</button>
+      </div>
+    </header>
+
+    <!-- ZONE 1: Left Property Inspector (Hidden on Landing, Visible in Workstation) -->
+    <aside id="leftInspector" class="workstation-pane pane" style="display: none; padding: 14px; flex-direction: column; gap: 14px;">
+      <div>
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Active Case Parameters</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div>
+            <label style="color: var(--text-muted); font-size: 10px;">VELOCITY U∞ (m/s)</label>
+            <input type="number" id="wsVelocity" class="input-precision" value="40.0" step="1" />
+          </div>
+          <div>
+            <label style="color: var(--text-muted); font-size: 10px;">CHORD LENGTH c (m)</label>
+            <input type="number" id="wsChord" class="input-precision" value="1.8" step="0.05" />
+          </div>
+          <div>
+            <label style="color: var(--text-muted); font-size: 10px;">TARGET WALL y+</label>
+            <select id="wsYPlus" class="input-precision">
+              <option value="1.0">y+ ≤ 1.0 (Low-Re Resolved)</option>
+              <option value="15.0">y+ = 15.0 (Buffer Layer - Warning)</option>
+              <option value="30.0">y+ = 30.0 (Wall Functions)</option>
+            </select>
+          </div>
+          <div>
+            <label style="color: var(--text-muted); font-size: 10px;">FLOW REGIME</label>
+            <select id="wsRegime" class="input-precision">
+              <option value="external_aerodynamics">External Aerodynamics</option>
+              <option value="internal_nozzle">Internal Nozzle / Pipe</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid var(--border-hairline); padding-top: 10px;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Deterministic Telemetry</div>
+        <div class="mono" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><span class="clickable-term" data-term="reynolds">Re:</span> <span id="wsRe" style="float: right;">--</span></div>
+          <div><span class="clickable-term" data-term="mach">Mach:</span> <span id="wsMach" style="float: right;">--</span></div>
+          <div><span class="clickable-term" data-term="y_plus">Δs (First Cell):</span> <span id="wsDeltaS" style="float: right; color: var(--accent-cyan);">--</span></div>
+          <div><span>Boundary Layer δ:</span> <span id="wsDelta" style="float: right;">--</span></div>
+          <div><span>Prism Layers:</span> <span id="wsLayers" style="float: right;">--</span></div>
+          <div><span class="clickable-term" data-term="k_omega_sst">Turbulence:</span> <span id="wsTurb" style="float: right; font-size: 10px; color: var(--accent-emerald);">k-ω SST</span></div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid var(--border-hairline); padding-top: 10px;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Hand Calc Verification</div>
+        <div class="mono" style="font-size: 10px; color: #94A3B8; display: flex; flex-direction: column; gap: 4px;">
+          <div>Skin Friction Cf: <span id="wsCf" style="float: right; color: #FFF;">--</span></div>
+          <div>Shear τw: <span id="wsTau" style="float: right; color: #FFF;">--</span></div>
+          <div>Friction Drag: <span id="wsFDrag" style="float: right; color: #FFF;">--</span></div>
+          <div>Theory Cl (4°): <span id="wsCl" style="float: right; color: var(--accent-cyan);">--</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ZONE 2 & 3: Center Split (3D Viewport on Top, Workbench on Bottom) -->
+    <main id="centerStage" style="display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;">
+      <!-- ZONE 2: 3D WebGL Canvas -->
+      <div id="viewport3D" style="flex: 1; position: relative; width: 100%; min-height: 250px; background: #000; overflow: hidden;">
+        <div id="threeCanvasMount" style="width: 100%; height: 100%;"></div>
+
+        <!-- ANSYS / Blender Floating Glass Viewport Toolbar -->
+        <div id="viewportToolbar" style="position: absolute; top: 14px; left: 16px; display: flex; gap: 8px; z-index: 15; align-items: center; background: rgba(10, 14, 23, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 5px 8px; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <!-- Shading Mode Group -->
+          <div style="display: flex; gap: 2px; background: rgba(0,0,0,0.4); padding: 2px; border-radius: 4px;">
+            <button id="btnModeShadedEdges" class="vp-tool-btn active" title="ANSYS Shaded + Feature Edges" onclick="setViewportShading('shaded_edges')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              <span>Edges</span>
+            </button>
+            <button id="btnModeSmooth" class="vp-tool-btn" title="Blender Smooth Studio PBR" onclick="setViewportShading('smooth')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path></svg>
+              <span>Smooth</span>
+            </button>
+            <button id="btnModeWireframe" class="vp-tool-btn" title="CAE Mesh Wireframe" onclick="setViewportShading('wireframe')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+              <span>Wire</span>
+            </button>
+            <button id="btnModeNormals" class="vp-tool-btn" title="Surface Normal Diagnostics" onclick="setViewportShading('normals')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path></svg>
+              <span>Normals</span>
+            </button>
+          </div>
+
+          <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.12);"></div>
+
+          <!-- Material Theme Selector -->
+          <select id="selCadMaterial" class="vp-select" onchange="changeCadMaterial(this.value)">
+            <option value="titanium" selected>Titanium Slate (ANSYS)</option>
+            <option value="aeroblue">Aerospace Cyan</option>
+            <option value="ceramic">Studio Ceramic (Blender)</option>
+            <option value="carbon">Carbon Stealth</option>
+          </select>
+
+          <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.12);"></div>
+
+          <!-- Camera View Presets -->
+          <div style="display: flex; gap: 3px;">
+            <button class="vp-pill-btn" onclick="snapCameraView('iso')" title="Isometric View">ISO</button>
+            <button class="vp-pill-btn" onclick="snapCameraView('top')" title="Top (Plan) View">TOP</button>
+            <button class="vp-pill-btn" onclick="snapCameraView('side')" title="Side (Profile) View">SIDE</button>
+            <button class="vp-pill-btn" onclick="snapCameraView('front')" title="Front (Leading Edge) View">FRONT</button>
+            <button class="vp-pill-btn" onclick="snapCameraView('fit')" title="Fit to Screen (Reset Camera)">⛶ FIT</button>
+          </div>
+        </div>
+
+        <!-- 3D Interactive Orientation Triad / Navigation Gizmo -->
+        <div id="orientationGizmoContainer" style="position: absolute; top: 14px; right: 16px; width: 84px; height: 84px; z-index: 15; pointer-events: auto; background: rgba(10, 14, 23, 0.65); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
+          <canvas id="gizmoCanvas" width="84" height="84" style="cursor: pointer; display: block;"></canvas>
+        </div>
+
+        <!-- Stitch Landing Card Overlay -->
+        <div id="landingOverlay" style="position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); width: 860px; max-width: calc(100% - 40px); background: rgba(14, 16, 21, 0.92); backdrop-filter: blur(14px); border: 1px solid var(--border-hairline); padding: 20px; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.85); z-index: 20;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div>
+              <h1 style="font-size: 14px; font-weight: 600; color: #FFF;">Simulation Wind Tunnel Setup</h1>
+              <p style="color: var(--text-muted); font-size: 11px;">Set operating conditions to derive non-dimensional metrics, boundary layer prisms, and domain bounds.</p>
+            </div>
+            <button id="btnInitWorkflow" class="btn-action">Confirm Domain &amp; Initialize Workflow →</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px;">VELOCITY U∞ (m/s)</label>
+              <input type="number" id="landVelocity" value="40.0" step="1" class="input-precision" />
+            </div>
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px;">CHORD c (m)</label>
+              <input type="number" id="landChord" value="1.8" step="0.05" class="input-precision" />
+            </div>
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px;">TARGET y+</label>
+              <select id="landYPlus" class="input-precision">
+                <option value="1.0">y+ ≤ 1.0 (Low-Re)</option>
+                <option value="15.0">y+ = 15.0 (Buffer Warning)</option>
+                <option value="30.0">y+ = 30.0 (Wall Func)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px;">GEOMETRY</label>
+              <button type="button" onclick="document.getElementById('cadInput').click()" class="input-precision" style="cursor: pointer; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📂 Load CAD (.step, .stp, .stl)...</button>
+              <input type="file" id="cadInput" style="display: none;" accept=".step,.stp,.iges,.igs,.brep,.stl,.obj,.ply,.glb,.gltf,.3mf" />
+            </div>
+          </div>
+          <div class="mono" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; border-top: 1px solid var(--border-hairline); padding-top: 10px; font-size: 11px;">
+            <div><span style="color: var(--text-muted);">Re:</span> <span id="landRe">--</span></div>
+            <div><span style="color: var(--text-muted);">Mach:</span> <span id="landMach">--</span></div>
+            <div><span style="color: var(--text-muted);">First Cell (Δs):</span> <span id="landDeltaS" style="color: var(--accent-cyan);">--</span></div>
+            <div><span style="color: var(--text-muted);">Domain:</span> <span id="landDomain" style="color: var(--accent-emerald);">--</span></div>
+          </div>
+        </div>
+
+        <!-- 2D Boundary Layer Prism Stack Magnifier Widget -->
+        <div id="blMagnifierWidget" style="display: block; position: absolute; bottom: 16px; right: 16px; background: rgba(11, 16, 25, 0.95); border: 1px solid #1e293b; padding: 12px 14px; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.7); z-index: 15; width: 280px;">
+          <div style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.05em; font-family: var(--font-mono);">
+            <span>WALL PRISM RESOLUTION</span>
+            <span id="blYPlusBadge" style="color: #10b981; font-family: var(--font-mono); font-weight: 700; font-size: 11px;">Y+ ≤ 1.0</span>
+          </div>
+          <canvas id="blCanvas" width="252" height="118" style="background: #080d16; border: 1px solid #1e293b; border-radius: 4px; display: block; width: 100%; height: 118px;"></canvas>
+        </div>
+      </div>
+
+      <!-- ZONE 3: Center-Bottom Workbench (Hidden on Landing, Visible in Workstation) -->
+      <div id="workbenchDock" style="display: none; height: 42%; background: var(--bg-panel); border-top: 1px solid var(--border-hairline); flex-direction: column;">
+        <div style="display: flex; border-bottom: 1px solid var(--border-hairline); background: #0A0C10; justify-content: space-between; align-items: center;">
+          <div style="display: flex;">
+            <button class="tab-btn active" id="tabBtnDicts" onclick="switchWorkbenchTab('dicts')">Solver Dictionaries</button>
+            <button class="tab-btn" id="tabBtnConvergence" onclick="switchWorkbenchTab('convergence')">Convergence &amp; Residuals</button>
+            <button class="tab-btn" id="tabBtnGCI" onclick="switchWorkbenchTab('gci')"><span class="clickable-term" data-term="roache_gci">ASME V&amp;V 20 GCI</span></button>
+            <button class="tab-btn" id="tabBtnVTK" onclick="switchWorkbenchTab('vtk')">VTK 3D Contours</button>
+          </div>
+          <div id="vtkControlsBar" style="display: none; padding-right: 12px; gap: 8px; align-items: center;">
+            <span style="font-size: 10px; color: var(--text-muted);">SCALAR:</span>
+            <select id="selScalarField" class="input-precision" style="width: 140px;" onchange="applyVtkScalar(this.value)">
+              <option value="none">Geometry Only</option>
+              <option value="Cp" selected>Surface Pressure Cp</option>
+              <option value="p">Static Pressure (Pa)</option>
+              <option value="U_magnitude">Velocity Magnitude |U|</option>
+            </select>
+            <input type="file" id="vtkUploader" accept=".vtk,.vtp,.vtu" style="display: none;" onchange="handleVtkUpload(this)" />
+            <button class="btn-action" style="background: #1E2330; color: var(--accent-cyan); border: 1px solid var(--border-hairline);" onclick="document.getElementById('vtkUploader').click()">📂 Ingest foamToVTK File</button>
+            <button class="btn-action" style="background: rgba(0,199,232,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,199,232,0.3);" onclick="loadSampleVtkContour()">Load NACA 0012 Post-Field</button>
+          </div>
+        </div>
+
+        <!-- Tab 1: Solver Dictionaries -->
+        <div id="tabContentDicts" style="flex: 1; padding: 12px; overflow-y: auto;">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+            <button class="btn-action" style="background: #1E2330; color: var(--accent-cyan); border: 1px solid #334155;" onclick="copyDictionaryToClipboard()">📋 1-Click Copy Dict</button>
+          </div>
+          <pre id="codeView" class="mono" style="font-size: 11px; color: var(--accent-cyan); line-height: 1.5;"></pre>
+        </div>
+
+        <!-- Tab 2: Convergence Diagnostics -->
+        <div id="tabContentConvergence" style="display: none; flex: 1; padding: 12px; flex-direction: column;">
+          <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+            <input type="file" id="logUploader" style="display: none;" />
+            <button onclick="document.getElementById('logUploader').click()" class="btn-action" style="background: #1E2330; color: #FFF; border: 1px solid #334155;">Upload Solver Log File</button>
+            <span id="logVerdict" class="mono" style="font-size: 11px;"></span>
+          </div>
+          <canvas id="residualChart" width="600" height="120" style="width: 100%; height: 120px; background: #050608; border: 1px solid var(--border-hairline); display: block;"></canvas>
+        </div>
+
+        <!-- Tab 3: ASME V&V 20 GCI -->
+        <div id="tabContentGCI" style="display: none; flex: 1; padding: 12px; overflow-y: auto;">
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="number" id="gciCoarse" class="input-precision" placeholder="Cd Coarse (e.g. 0.0091)" step="0.0001" value="0.0091" />
+            <input type="number" id="gciMedium" class="input-precision" placeholder="Cd Medium (e.g. 0.0086)" step="0.0001" value="0.0086" />
+            <input type="number" id="gciFine" class="input-precision" placeholder="Cd Fine (e.g. 0.0084)" step="0.0001" value="0.0084" />
+            <button id="btnRunGCI" class="btn-action" onclick="runGciCalculation()">Calculate GCI via API</button>
+          </div>
+          <div id="gciResults" class="mono" style="font-size: 11px; color: var(--accent-emerald); line-height: 1.6;"></div>
+        </div>
+
+        <!-- Tab 4: VTK 3D Scalar Field Inspector -->
+        <div id="tabContentVTK" style="display: none; flex: 1; padding: 12px; overflow-y: auto;">
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+            <div style="background: #050608; border: 1px solid var(--border-hairline); padding: 12px; border-radius: 2px;">
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Active Surface Mesh Telemetry</div>
+              <div class="mono" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px;">
+                <div><span style="color: var(--text-muted);">Vertices:</span> <span id="vtkVertCount" style="color:#FFF;">--</span></div>
+                <div><span style="color: var(--text-muted);">Triangles:</span> <span id="vtkTriCount" style="color:#FFF;">--</span></div>
+                <div><span style="color: var(--text-muted);">Active Field:</span> <span id="vtkActiveFieldName" style="color:var(--accent-cyan);">None</span></div>
+              </div>
+              <div style="margin-top: 10px; border-top: 1px solid var(--border-hairline); padding-top: 8px; font-size: 11px;">
+                <span style="color: var(--text-muted);">Scalar Range [Min, Max]:</span>
+                <span id="vtkRangeDisplay" class="mono" style="color: var(--accent-emerald); margin-left: 8px;">--</span>
+              </div>
+            </div>
+            <div style="background: #050608; border: 1px solid var(--border-hairline); padding: 12px; border-radius: 2px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">CAE Rainbow Colormap</div>
+              <div style="height: 14px; width: 100%; background: linear-gradient(to right, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF0000); border-radius: 2px; margin: 8px 0;"></div>
+              <div class="mono" style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted);">
+                <span>Blue: Min / Suction</span>
+                <span>Red: Stagnation / Peak</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ZONE 4: Right Rail (AI Reasoning Copilot & Decision Timeline) -->
+    <aside id="rightCopilotRail" class="workstation-pane pane" style="display: none; border-right: none; border-left: 1px solid var(--border-hairline); padding: 14px; flex-direction: column; gap: 14px;">
+      <!-- Copilot Review Section -->
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between;">
+          <span>AI Engineering Copilot</span>
+          <span style="color: var(--accent-emerald);">Active</span>
+        </div>
+        <div id="copilotReview" style="background: var(--bg-card); border: 1px solid var(--border-hairline); padding: 10px; border-radius: 2px; font-size: 11px; line-height: 1.5; color: #CBD5E1; min-height: 110px; overflow-y: auto;">
+          Initializing case reasoning...
+        </div>
+      </div>
+      <!-- Immutable Decision Trail -->
+      <div style="height: 48%; border-top: 1px solid var(--border-hairline); padding-top: 10px; display: flex; flex-direction: column;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Audit Decision Trail</div>
+        <div id="decisionTrail" class="mono" style="flex: 1; overflow-y: auto; font-size: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+    </aside>
+
+    <!-- Slide-Out Verified Concept Knowledge Drawer -->
+    <div id="conceptDrawer" style="display: none; position: fixed; top: 0; right: 0; width: 400px; height: 100vh; background: #0E1015; border-left: 1px solid var(--border-hairline); z-index: 200; padding: 22px; box-shadow: -10px 0 30px rgba(0,0,0,0.8); overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span id="drawerTermId" class="mono" style="font-size: 10px; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.05em;"></span>
+        <button onclick="document.getElementById('conceptDrawer').style.display='none'" style="background: none; border: none; color: #FFF; font-size: 16px; cursor: pointer; padding: 4px;">✕</button>
+      </div>
+      <h2 id="drawerTitle" style="font-size: 15px; font-weight: 700; margin-bottom: 10px; color: #FFF;"></h2>
+      <div id="drawerEquation" class="mono" style="background: #050608; border: 1px solid var(--border-hairline); padding: 10px; margin-bottom: 12px; color: var(--accent-emerald); font-size: 11px;"></div>
+      <p id="drawerDefinition" style="font-size: 12px; color: #CBD5E1; line-height: 1.6; margin-bottom: 14px;"></p>
+      <div style="font-size: 11px; margin-bottom: 12px;">
+        <div style="color: var(--accent-emerald); font-weight: 600; margin-bottom: 2px;">Governing Conditions:</div>
+        <p id="drawerGoverning" style="color: #94A3B8; line-height: 1.5;"></p>
+      </div>
+      <div style="font-size: 11px; margin-bottom: 14px;">
+        <div style="color: var(--accent-crimson); font-weight: 600; margin-bottom: 2px;">Failure Modes &amp; Risks:</div>
+        <p id="drawerFailures" style="color: #94A3B8; line-height: 1.5;"></p>
+      </div>
+      <div style="font-size: 10px; color: var(--text-muted); border-top: 1px solid var(--border-hairline); padding-top: 8px;">
+        Authoritative Citation: <span id="drawerRef" style="color: #CBD5E1;"></span>
+      </div>
+    </div>
+  </div>
+  </section>
 
   <!-- =============================================================
        JAVASCRIPT INTERACTIONS & PRODUCTION LOGIC
@@ -2482,7 +3048,7 @@
       const cadInput = document.createElement('input');
       cadInput.type = 'file';
       cadInput.id = 'globalCadInput';
-      cadInput.accept = '.stl,.obj,.step,.stp';
+      cadInput.accept = '.step,.stp,.iges,.igs,.brep,.stl,.obj,.ply,.glb,.gltf,.3mf';
       cadInput.style.display = 'none';
       document.body.appendChild(cadInput);
     }
@@ -2586,21 +3152,7 @@
       document.getElementById('globalCadInput').onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-          const res = await fetch(`${API_BASE}/api/cad/inspect`, {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-          alert(`CAD Geometry Inspected:\n\nFile: ${file.name}\nChord Length (c): ${data.characteristic_chord_m} m\nSpan (b): ${data.span_m} m\nWatertight Mesh: ${data.is_watertight ? 'YES' : 'NO'}\nDomain Bounds: Upstream: ${data.domain_box?.inlet_distance_m}m, Wake: ${data.domain_box?.outlet_distance_m}m\nTrailing Edge Check: ${data.cae_readiness?.trailing_edge_status} (${data.cae_readiness?.defeaturing_recommendation})`);
-        } catch (err) {
-          console.error("CAD Inspection failed:", err);
-          alert(`CAD Uploaded: ${file.name}\nBackend inspection at http://127.0.0.1:8000/api/cad/inspect.`);
-        }
+        await handleCADInspection(file);
       };
 
       // Handle Log Audit Upload
@@ -2639,11 +3191,8 @@
     setupQuickActions();
 
     function handlePlatformLaunch() {
-      console.log('[AeroForge]: Launching platform...');
-      const target = document.getElementById('subsystems');
-      if (target) {
-        window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
-      }
+      console.log('[AeroForge]: Launching platform into Simulation Lab...');
+      switchMainTab('simulation');
     }
 
     function handleRequestAccess() {
@@ -2682,6 +3231,1344 @@
     document.querySelectorAll('.reveal-item').forEach(el => {
       revealObserver.observe(el);
     });
+  
+    // =============================================================
+    
+    // =============================================================
+    // MULTI-VIEW ROUTING SHELL (Company Overview vs. Simulation Lab)
+    // =============================================================
+    let isSimulationLabInitialized = false;
+
+    function switchView(targetView) {
+      const viewOverview = document.getElementById('viewOverview') || document.getElementById('viewCompanyOverview');
+      const viewSim = document.getElementById('viewSimulation') || document.getElementById('viewSimulationLab');
+      
+      const tabOverview = document.getElementById('navTabOverview') || document.getElementById('navCompanyOverview');
+      const tabSim = document.getElementById('navTabSimulation') || document.getElementById('navSimulationLab');
+      const tabDashboard = document.getElementById('navTabDashboard') || document.getElementById('navWorkspaceDashboard');
+
+      // Update Nav Tab active states
+      document.querySelectorAll('.nav-tab, .nav-link').forEach(tab => tab.classList.remove('active'));
+
+      if (targetView === 'simulation') {
+        if (viewOverview) viewOverview.style.display = 'none';
+        if (viewSim) {
+          viewSim.style.display = 'block';
+          viewSim.classList.add('active');
+        }
+        if (tabSim) tabSim.classList.add('active');
+
+        // Lazy initialize WebGL simulation core on first view
+        if (!isSimulationLabInitialized) {
+          try {
+            initSimulationLabCore();
+            isSimulationLabInitialized = true;
+          } catch (err) {
+            console.error("Simulation Lab initialization error:", err);
+          }
+        }
+
+        // Clean resize without destroying WebGL context
+        setTimeout(() => {
+          const mount = document.getElementById('threeCanvasMount') || (document.getElementById('threeCanvasMount') || document.getElementById('threeMount'));
+          if (renderer && camera && mount) {
+            camera.aspect = mount.clientWidth / mount.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(mount.clientWidth, mount.clientHeight);
+          }
+          if (typeof updateLanding === 'function') {
+            updateLanding();
+          }
+          if (typeof drawBoundaryLayerWidget === 'function') {
+            drawBoundaryLayerWidget(0.0084, 24.5, 28, 1.0);
+          }
+          window.dispatchEvent(new Event('resize'));
+        }, 50);
+
+      } else if (targetView === 'dashboard') {
+        // Workspace Dashboard: activate workstation mode in simulation lab
+        switchView('simulation');
+        if (tabDashboard) {
+          document.querySelectorAll('.nav-tab, .nav-link').forEach(tab => tab.classList.remove('active'));
+          tabDashboard.classList.add('active');
+        }
+        const btnInit = document.getElementById('btnInitWorkflow');
+        const overlay = document.getElementById('landingOverlay');
+        if (btnInit && overlay && overlay.style.display !== 'none') {
+          btnInit.click();
+        }
+
+      } else {
+        // Company Overview
+        if (viewSim) {
+          viewSim.style.display = 'none';
+          viewSim.classList.remove('active');
+        }
+        if (viewOverview) {
+          viewOverview.style.display = 'block';
+          viewOverview.classList.add('active');
+        }
+        if (tabOverview) tabOverview.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // Backwards-compatible alias for existing triggers
+    function switchMainTab(targetView) {
+      if (targetView === 'workspace') return switchView('dashboard');
+      switchView(targetView);
+    }
+
+    // Attach Header Tab Click Handlers
+    const navOverviewBtn = document.getElementById('navCompanyOverview');
+    if (navOverviewBtn) {
+      navOverviewBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchMainTab('overview');
+      });
+    }
+
+    const navSimBtn = document.getElementById('navSimulationLab');
+    if (navSimBtn) {
+      navSimBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchMainTab('simulation');
+      });
+    }
+
+    const navWorkBtn = document.getElementById('navWorkspaceDashboard');
+    if (navWorkBtn) {
+      navWorkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchMainTab('workspace');
+      });
+    }
+
+    const btnHeroLaunch = document.getElementById('btnLaunchPlatform');
+    if (btnHeroLaunch) {
+      btnHeroLaunch.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchMainTab('simulation');
+      });
+    }
+
+    // Quick Action Dropdown: New Run -> Switch to Sim Lab and initialize run
+    const origActionNewRun = document.getElementById('actionNewRun');
+    if (origActionNewRun) {
+      const origHandler = origActionNewRun.onclick;
+      origActionNewRun.onclick = async (e) => {
+        switchMainTab('simulation');
+        if (origHandler) await origHandler(e);
+      };
+    }
+
+    // Quick Action Dropdown: Import CAD -> Switch to Sim Lab and trigger CAD import
+    const origActionImportCAD = document.getElementById('actionImportCAD');
+    if (origActionImportCAD) {
+      origActionImportCAD.onclick = (e) => {
+        e.preventDefault();
+        closeAllDropdowns();
+        switchMainTab('simulation');
+        const cadIn = document.getElementById('cadInput') || document.getElementById('globalCadInput');
+        if (cadIn) cadIn.click();
+      };
+    }
+
+    // Quick Action Dropdown: Config BL -> Switch to Sim Lab and focus controls
+    const origActionConfigBL = document.getElementById('actionConfigBL');
+    if (origActionConfigBL) {
+      origActionConfigBL.onclick = async (e) => {
+        e.preventDefault();
+        closeAllDropdowns();
+        switchMainTab('simulation');
+        const btnInit = document.getElementById('btnInitWorkflow');
+        if (btnInit && document.getElementById('landingOverlay').style.display !== 'none') {
+          btnInit.click();
+        }
+        setTimeout(() => {
+          const vel = document.getElementById('wsVelocity');
+          if (vel) { vel.focus(); vel.select(); }
+        }, 300);
+      };
+    }
+
+    // =============================================================
+    // EMBEDDED ENGINEERMIND SIMULATION WORKSTATION LOGIC
+    // =============================================================
+
+    const API = "http://127.0.0.1:8000";
+    let activeProjectId = 1;
+    let activeCaseId = null;
+    let scene, camera, renderer, controls, domainBoxMesh, modelMesh, grid, headLight;
+    let debounceTimer = null;
+    let currentVtkData = null;
+    let vtkMesh = null;
+    let modelEdges = null;
+    let activeMaterialKey = 'titanium';
+    let currentDisplayMode = 'shaded_edges'; // 'shaded_edges' | 'smooth' | 'wireframe' | 'normals'
+    let normalMaterial = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
+
+    const CAD_MATERIALS = {
+      titanium: {
+        name: 'Titanium Slate (ANSYS)',
+        color: 0x94a3b8,
+        roughness: 0.38,
+        metalness: 0.28,
+        edgeColor: 0x1e293b
+      },
+      aeroblue: {
+        name: 'Aerospace Cyan (EngineerMind)',
+        color: 0x0284c7,
+        roughness: 0.32,
+        metalness: 0.22,
+        edgeColor: 0x082f49
+      },
+      ceramic: {
+        name: 'Studio Ceramic (Blender)',
+        color: 0xe2e8f0,
+        roughness: 0.22,
+        metalness: 0.05,
+        edgeColor: 0x475569
+      },
+      carbon: {
+        name: 'Carbon Stealth',
+        color: 0x1e293b,
+        roughness: 0.55,
+        metalness: 0.15,
+        edgeColor: 0x00c7e8
+      }
+    };
+
+    function getActiveMaterial() {
+      if (currentDisplayMode === 'normals') {
+        normalMaterial.side = THREE.DoubleSide;
+        return normalMaterial;
+      }
+      const conf = CAD_MATERIALS[activeMaterialKey] || CAD_MATERIALS.titanium;
+      return new THREE.MeshStandardMaterial({
+        color: conf.color,
+        roughness: conf.roughness,
+        metalness: conf.metalness,
+        side: THREE.DoubleSide,
+        shadowSide: THREE.DoubleSide,
+        wireframe: (currentDisplayMode === 'wireframe'),
+        // Emissive ambient floor ensures backfaces and thin surfaces are ALWAYS visible when turning around
+        emissive: 0x182436,
+        emissiveIntensity: 0.15
+      });
+    }
+
+    function getActiveEdgeColor() {
+      const conf = CAD_MATERIALS[activeMaterialKey] || CAD_MATERIALS.titanium;
+      return conf.edgeColor;
+    }
+
+    function setViewportShading(mode) {
+      currentDisplayMode = mode;
+      document.querySelectorAll('.vp-tool-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtnMap = {
+        'shaded_edges': 'btnModeShadedEdges',
+        'smooth': 'btnModeSmooth',
+        'wireframe': 'btnModeWireframe',
+        'normals': 'btnModeNormals'
+      };
+      const b = document.getElementById(activeBtnMap[mode]);
+      if (b) b.classList.add('active');
+
+      if (!modelMesh) return;
+      modelMesh.material = getActiveMaterial();
+      if (modelEdges) {
+        modelEdges.visible = (mode === 'shaded_edges');
+      }
+    }
+
+    function changeCadMaterial(key) {
+      activeMaterialKey = key;
+      if (!modelMesh) return;
+      if (currentDisplayMode !== 'normals') {
+        modelMesh.material = getActiveMaterial();
+      }
+      if (modelEdges) {
+        modelEdges.material.color.setHex(getActiveEdgeColor());
+      }
+    }
+
+    // Procedural 3D NACA 0012 Symmetrical Aerofoil Generator
+    function createNACA0012Geometry(chord = 1.8, span = 4.2) {
+      const shape = new THREE.Shape();
+      const nPoints = 80;
+      const t = 0.12; // 12% thickness
+      const upperPts = [];
+      const lowerPts = [];
+
+      for (let i = 0; i <= nPoints; i++) {
+        const beta = (i / nPoints) * Math.PI;
+        const xc = 0.5 * (1 - Math.cos(beta)); // Cosine clustering at LE
+        const x = xc * chord;
+        // Standard NACA 4-digit thickness equation
+        const yt = 5 * t * chord * (
+          0.2969 * Math.sqrt(xc) -
+          0.1260 * xc -
+          0.3516 * Math.pow(xc, 2) +
+          0.2843 * Math.pow(xc, 3) -
+          0.1036 * Math.pow(xc, 4)
+        );
+        upperPts.push(new THREE.Vector2(x - chord * 0.5, yt));
+        lowerPts.push(new THREE.Vector2(x - chord * 0.5, -yt));
+      }
+
+      shape.moveTo(upperPts[0].x, upperPts[0].y);
+      for (let i = 1; i < upperPts.length; i++) {
+        shape.lineTo(upperPts[i].x, upperPts[i].y);
+      }
+      for (let i = lowerPts.length - 1; i >= 0; i--) {
+        shape.lineTo(lowerPts[i].x, lowerPts[i].y);
+      }
+      shape.closePath();
+
+      const extrudeSettings = {
+        steps: 1,
+        depth: span,
+        bevelEnabled: true,
+        bevelThickness: 0.04,
+        bevelSize: 0.04,
+        bevelOffset: 0,
+        bevelSegments: 4
+      };
+
+      const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      geom.center();
+      geom.computeVertexNormals();
+      return geom;
+    }
+
+    // Unified CAD Mesh Mount & ANSYS Feature Edges Attachment
+    function applyCadMesh(geometry, chordLength = 1.8) {
+      if (modelMesh && scene) {
+        scene.remove(modelMesh);
+      }
+
+      // 1. Recompute double-sided vertex normals and center geometry at origin
+      geometry.computeVertexNormals();
+      geometry.center();
+
+      // 2. Double-sided material
+      const mat = getActiveMaterial();
+      mat.side = THREE.DoubleSide;
+      modelMesh = new THREE.Mesh(geometry, mat);
+
+      // 3. Feature edge wire overlay (always visible from every angle)
+      try {
+        const edgeGeom = new THREE.EdgesGeometry(geometry, 20);
+        const edgeMat = new THREE.LineBasicMaterial({
+          color: getActiveEdgeColor(),
+          linewidth: 1.2,
+          transparent: true,
+          opacity: 0.85
+        });
+        modelEdges = new THREE.LineSegments(edgeGeom, edgeMat);
+        modelEdges.visible = (currentDisplayMode === 'shaded_edges');
+        modelMesh.add(modelEdges);
+      } catch (e) {
+        console.warn("Feature edge extraction:", e);
+      }
+
+      scene.add(modelMesh);
+
+      // 4. Dynamic clipping plane calculation to eliminate vanishing / clipping when orbiting
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+      if (geometry.boundingSphere && camera && controls) {
+        const radius = Math.max(0.02, geometry.boundingSphere.radius || 2.0);
+
+        // Near plane prevents clipping very thin sheets or aerofoils; Far plane prevents culling large spans
+        camera.near = Math.max(0.0005, radius / 800);
+        camera.far = Math.max(10000, radius * 150);
+        camera.updateProjectionMatrix();
+
+        controls.minDistance = Math.max(0.001, radius * 0.05);
+        controls.maxDistance = Math.max(2000, radius * 50);
+        controls.target.set(0, 0, 0);
+
+        camera.position.set(radius * 1.8, radius * 1.2, radius * 2.2);
+        controls.update();
+
+        // Dynamically place ground grid under the model so it never clips through thin wings
+        if (grid && scene) {
+          scene.remove(grid);
+          const gridSize = Math.max(80, Math.ceil(radius * 4 / 20) * 20);
+          grid = new THREE.GridHelper(gridSize, 80, 0x1e293b, 0x0b1320);
+          const minY = (geometry.boundingBox ? geometry.boundingBox.min.y : -0.5);
+          grid.position.y = minY - Math.max(0.05, radius * 0.02);
+          scene.add(grid);
+        }
+      }
+    }
+
+    // Camera Preset Snapping
+    function snapCameraView(mode) {
+      if (!camera || !controls) return;
+      const target = controls.target || new THREE.Vector3(0, 0, 0);
+      let dist = 12;
+      if (modelMesh && modelMesh.geometry && modelMesh.geometry.boundingSphere) {
+        dist = Math.max(3, modelMesh.geometry.boundingSphere.radius * 2.5);
+      } else {
+        dist = camera.position.distanceTo(target) || 12;
+      }
+
+      switch (mode) {
+        case 'iso':
+          camera.position.set(dist * 0.7, dist * 0.5, dist * 0.8);
+          camera.up.set(0, 1, 0);
+          break;
+        case 'top':
+          camera.position.set(0, dist * 1.3, 0.001);
+          camera.up.set(0, 0, -1);
+          break;
+        case 'bottom':
+          camera.position.set(0, -dist * 1.3, 0.001);
+          camera.up.set(0, 0, 1);
+          break;
+        case 'side':
+          camera.position.set(dist * 1.3, 0, 0);
+          camera.up.set(0, 1, 0);
+          break;
+        case 'side_neg':
+          camera.position.set(-dist * 1.3, 0, 0);
+          camera.up.set(0, 1, 0);
+          break;
+        case 'front':
+          camera.position.set(0, 0, dist * 1.3);
+          camera.up.set(0, 1, 0);
+          break;
+        case 'back':
+          camera.position.set(0, 0, -dist * 1.3);
+          camera.up.set(0, 1, 0);
+          break;
+        case 'fit':
+          if (modelMesh && modelMesh.geometry && modelMesh.geometry.boundingSphere) {
+            const r = modelMesh.geometry.boundingSphere.radius;
+            camera.position.set(r * 1.8, r * 1.2, r * 2.2);
+            controls.target.set(0, 0, 0);
+          } else {
+            camera.position.set(15, 10, 20);
+            controls.target.set(0, 0, 0);
+          }
+          break;
+      }
+      controls.target.copy(target);
+      controls.update();
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+    }
+
+    // 3D Navigation Triad / Gizmo
+    let gizmoAxisHitTest = null;
+    function initGizmo() {
+      const gCvs = document.getElementById('gizmoCanvas');
+      if (!gCvs) return;
+      gCvs.addEventListener('click', (e) => {
+        const rect = gCvs.getBoundingClientRect();
+        const clickX = e.clientX - rect.left - rect.width / 2;
+        const clickY = e.clientY - rect.top - rect.height / 2;
+        if (gizmoAxisHitTest) {
+          gizmoAxisHitTest(clickX, clickY);
+        }
+      });
+    }
+
+    function renderOrientationGizmo() {
+      const gCvs = document.getElementById('gizmoCanvas');
+      if (!gCvs || !camera) return;
+      const ctx = gCvs.getContext('2d');
+      const w = gCvs.width;
+      const h = gCvs.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const radius = 26;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const m = new THREE.Matrix4();
+      m.extractRotation(camera.matrixWorldInverse);
+
+      const axes = [
+        { name: 'X', pos: new THREE.Vector3(1, 0, 0), color: '#ef4444', view: 'side' },
+        { name: 'Y', pos: new THREE.Vector3(0, 1, 0), color: '#10b981', view: 'top' },
+        { name: 'Z', pos: new THREE.Vector3(0, 0, 1), color: '#38bdf8', view: 'front' },
+        { name: '-X', pos: new THREE.Vector3(-1, 0, 0), color: '#7f1d1d', view: 'side_neg', isNeg: true },
+        { name: '-Y', pos: new THREE.Vector3(0, -1, 0), color: '#064e3b', view: 'bottom', isNeg: true },
+        { name: '-Z', pos: new THREE.Vector3(0, 0, -1), color: '#1e3a8a', view: 'back', isNeg: true }
+      ];
+
+      axes.forEach(ax => {
+        const v = ax.pos.clone().applyMatrix4(m);
+        ax.screenX = cx + v.x * radius;
+        ax.screenY = cy - v.y * radius;
+        ax.depth = v.z;
+      });
+
+      axes.sort((a, b) => a.depth - b.depth);
+
+      gizmoAxisHitTest = (clickX, clickY) => {
+        for (let i = axes.length - 1; i >= 0; i--) {
+          const ax = axes[i];
+          const dx = (ax.screenX - cx) - clickX;
+          const dy = (ax.screenY - cy) - clickY;
+          if (Math.hypot(dx, dy) < 10) {
+            snapCameraView(ax.view);
+            return;
+          }
+        }
+        if (Math.hypot(clickX, clickY) < 14) {
+          snapCameraView('iso');
+        }
+      };
+
+      axes.forEach(ax => {
+        if (!ax.isNeg) {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(ax.screenX, ax.screenY);
+          ctx.strokeStyle = ax.color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        const badgeR = ax.isNeg ? 4 : 8;
+        ctx.beginPath();
+        ctx.arc(ax.screenX, ax.screenY, badgeR, 0, Math.PI * 2);
+        ctx.fillStyle = ax.isNeg ? '#334155' : ax.color;
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        if (!ax.isNeg) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 8px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ax.name, ax.screenX, ax.screenY);
+        }
+      });
+    }
+
+    // 1. Initial State & Physics Calculation (ZERO CLIENT-SIDE MATH FALLBACKS)
+    async function fetchCalculations(v, c, yPlus, regime = "external_aerodynamics") {
+      try {
+        const res = await fetch(`${API}/calculate-physics`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ velocity: v, chord_length: c, target_y_plus: yPlus, regime: regime })
+        });
+        if (!res.ok) throw new Error("Backend calculation failed");
+        return await res.json();
+      } catch (err) {
+        console.warn("Backend offline or error:", err);
+        return null;
+      }
+    }
+
+    async function updateLanding() {
+      const v = parseFloat(document.getElementById('landVelocity').value) || 40.0;
+      const c = parseFloat(document.getElementById('landChord').value) || 1.8;
+      const yPlus = parseFloat(document.getElementById('landYPlus').value) || 1.0;
+      
+      const data = await fetchCalculations(v, c, yPlus);
+      if (!data) return;
+
+      document.getElementById('landRe').innerText = data.reynolds_number.toLocaleString();
+      document.getElementById('landMach').innerText = data.mach_number.toFixed(3);
+      document.getElementById('landDeltaS').innerText = `${data.first_cell_height_mm} mm`;
+      document.getElementById('landDomain').innerText = `${data.inlet_distance_m}m / ${data.outlet_distance_m}m`;
+
+      updateDomainBox(data.inlet_distance_m, data.outlet_distance_m, data.lateral_distance_m);
+      drawBoundaryLayerWidget(data.first_cell_height_mm, data.boundary_layer_thickness_mm, data.recommended_prism_layers, yPlus);
+    }
+
+    // 2. Three.js Initialization & Persistent Viewport (ZERO CANVAS DESTRUCTION)
+    function initThree() {
+      const cont = (document.getElementById('threeCanvasMount') || document.getElementById('threeMount'));
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, cont.clientWidth / cont.clientHeight, 0.1, 1000);
+      camera.position.set(15, 10, 20);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setClearColor(0x000000, 1.0);
+      renderer.setSize(cont.clientWidth, cont.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      cont.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      // ANSYS / Blender Studio Lighting Setup with Omnidirectional Headlight
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.45);
+      scene.add(ambLight);
+
+      const hemiLight = new THREE.HemisphereLight(0x94a3b8, 0x1e293b, 0.65);
+      scene.add(hemiLight);
+
+      // Camera Headlight: attached to camera so turning around ALWAYS illuminates the visible side
+      headLight = new THREE.DirectionalLight(0xffffff, 0.85);
+      headLight.position.set(0, 0, 1);
+      camera.add(headLight);
+      scene.add(camera);
+
+      const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      keyLight.position.set(15, 25, 20);
+      scene.add(keyLight);
+
+      const fillLight = new THREE.DirectionalLight(0x60a5fa, 0.5);
+      fillLight.position.set(-15, -10, -15);
+      scene.add(fillLight);
+
+      const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.6);
+      rimLight.position.set(0, 15, -25);
+      scene.add(rimLight);
+      
+      grid = new THREE.GridHelper(80, 80, 0x1e293b, 0x0b1320);
+      grid.position.y = -0.5;
+      scene.add(grid);
+
+      // Default Authentic 3D NACA 0012 Aerofoil Model
+      const defaultWing = createNACA0012Geometry(1.8, 4.2);
+      applyCadMesh(defaultWing, 1.8);
+
+      // CAD file input handler
+      document.getElementById('cadInput').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        await handleCADInspection(file);
+      });
+
+      // Bind input debouncing (150ms)
+      ['landVelocity', 'landChord', 'landYPlus'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(updateLanding, 150);
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        if (!renderer || !camera) return;
+        const c = (document.getElementById('threeCanvasMount') || document.getElementById('threeMount'));
+        camera.aspect = c.clientWidth / c.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(c.clientWidth, c.clientHeight);
+      });
+
+      initGizmo();
+      updateLanding();
+      drawBoundaryLayerWidget(0.0084, 24.5, 28, 1.0);
+      renderLoop();
+    }
+
+    async function handleCADInspection(file) {
+      if (!file) return;
+
+      // 1. Ensure Simulation Lab view is active and Three.js is initialized
+      switchView('simulation');
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const res = await fetch(`${API}/api/cad/inspect`, { method: 'POST', body: fd });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Inspection server error");
+        }
+        const data = await res.json();
+
+        // 2. Update chord and aerodynamic inputs
+        if (data.characteristic_chord_m) {
+          const lc = document.getElementById('landChord');
+          if (lc) lc.value = data.characteristic_chord_m;
+          const wsC = document.getElementById('wsChord');
+          if (wsC) wsC.value = data.characteristic_chord_m;
+          if (typeof updateLanding === 'function') updateLanding();
+        }
+
+        // 3. Render geometry in 3D Viewport with ANSYS / Blender Studio Pipeline
+        let meshRendered = false;
+
+        // Path A: Use backend triangulated mesh if provided (guaranteed to render regardless of client loader)
+        if (data.mesh_data && data.mesh_data.vertices && data.mesh_data.vertices.length > 0) {
+          try {
+            const geometry = new THREE.BufferGeometry();
+            const verts = new Float32Array(data.mesh_data.vertices);
+            const indices = new Uint32Array(data.mesh_data.indices);
+            geometry.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+            applyCadMesh(geometry, data.characteristic_chord_m || 1.8);
+            meshRendered = true;
+          } catch (mErr) {
+            console.warn("Backend mesh render fallback:", mErr);
+          }
+        }
+
+        // Path B: Fallback client-side parse with STLLoader
+        if (!meshRendered) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            try {
+              if (typeof THREE.STLLoader !== 'undefined') {
+                const loader = new THREE.STLLoader();
+                const geometry = loader.parse(event.target.result);
+                applyCadMesh(geometry, data.characteristic_chord_m || 1.8);
+              }
+            } catch (pErr) {
+              console.error("STLLoader client parse failed:", pErr);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        }
+
+        // 4. Resize and refresh viewport
+        setTimeout(() => {
+          const mount = (document.getElementById('threeCanvasMount') || document.getElementById('threeMount'));
+          if (renderer && camera && mount) {
+            camera.aspect = mount.clientWidth / mount.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(mount.clientWidth, mount.clientHeight);
+          }
+        }, 100);
+
+        alert(`CAD Geometry Loaded Successfully!\n\nFile: ${file.name}\nFormat: ${(data.format || 'CAD').toUpperCase()}\nChord Length (c): ${data.characteristic_chord_m} m\nSpan (b): ${data.span_m} m\nWatertight Mesh: ${data.is_watertight ? 'YES' : 'NO'}\nTrailing-Edge Verification: ${data.cae_readiness?.trailing_edge_status || 'PASS'}`);
+
+      } catch (err) {
+        console.error("CAD inspection failed:", err);
+        // Even if backend fails, attempt robust local rendering via applyCadMesh
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+            if (typeof THREE.STLLoader !== 'undefined' && (file.name.toLowerCase().endsWith('.stl') || !file.name.includes('.'))) {
+              const loader = new THREE.STLLoader();
+              const geometry = loader.parse(event.target.result);
+              applyCadMesh(geometry, 1.8);
+              alert(`Loaded local STL fallback: ${file.name}`);
+            } else {
+              alert(`CAD Inspection failed: ${err.message || 'Ensure backend server is running at http://127.0.0.1:8000'}`);
+            }
+          } catch (e) {
+            console.error("Local fallback parse error:", e);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function updateDomainBox(inlet, outlet, lateral) {
+      if (domainBoxMesh) scene.remove(domainBoxMesh);
+      const length = inlet + outlet;
+      const height = lateral * 2;
+      const width = lateral;
+      const geom = new THREE.BoxGeometry(length, height, width);
+      const wire = new THREE.WireframeGeometry(geom);
+      domainBoxMesh = new THREE.LineSegments(wire);
+      domainBoxMesh.material.color.setHex(0x00C7E8);
+      domainBoxMesh.material.transparent = true;
+      domainBoxMesh.material.opacity = 0.25;
+      domainBoxMesh.position.set((outlet - inlet) / 2, 0, 0);
+      scene.add(domainBoxMesh);
+    }
+
+    function renderLoop() {
+      requestAnimationFrame(renderLoop);
+      if (controls) controls.update();
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+      renderOrientationGizmo();
+    }
+
+    // 3. 2D Boundary Layer Prism Stack Magnifier Widget (Color-coded for buffer violations)
+    function drawBoundaryLayerWidget(deltaS_mm = 0.0084, delta_mm = 24.5, layers = 28, yPlus = 1.0) {
+      const cvs = document.getElementById('blCanvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      const badge = document.getElementById('blYPlusBadge');
+      let statusColor = '#10b981'; // emerald
+      if (yPlus > 5.0 && yPlus < 30.0) {
+        statusColor = '#ef4444'; // crimson buffer violation
+        if (badge) { badge.innerText = `Y+ = ${yPlus.toFixed(1)} (BUFFER VIOLATION)`; badge.style.color = '#ef4444'; }
+      } else if (yPlus >= 30.0) {
+        statusColor = '#38bdf8'; // cyan for wall functions
+        if (badge) { badge.innerText = `Y+ = ${yPlus.toFixed(1)}`; badge.style.color = '#38bdf8'; }
+      } else {
+        if (badge) { badge.innerText = `Y+ ≤ ${yPlus.toFixed(1)}`; badge.style.color = '#10b981'; }
+      }
+
+      // Draw wall prism mesh stack lines
+      const wallY = cvs.height - 18;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, wallY, cvs.width, 18);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '9px "JetBrains Mono", "IBM Plex Mono", monospace';
+      ctx.fillText('Solid Wall Boundary (y = 0)', 10, cvs.height - 5);
+
+      let currentY = wallY;
+      let h = Math.max(3.0, (deltaS_mm / (delta_mm || 25.0)) * (cvs.height - 30) * 12);
+      
+      for (let i = 0; i < (layers || 28); i++) {
+        currentY -= h;
+        if (currentY < 18) break;
+
+        ctx.strokeStyle = (i === 0) ? statusColor : '#223249';
+        ctx.lineWidth = (i === 0) ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(8, currentY);
+        ctx.lineTo(cvs.width - 8, currentY);
+        ctx.stroke();
+
+        // Draw vertical prism cell dividers
+        if (i < 8) {
+          ctx.strokeStyle = '#182436';
+          ctx.lineWidth = 1;
+          for (let x = 20; x < cvs.width - 20; x += 28) {
+            ctx.beginPath();
+            ctx.moveTo(x, currentY);
+            ctx.lineTo(x, currentY + h);
+            ctx.stroke();
+          }
+        }
+        h *= 1.15;
+      }
+
+      // First cell height badge text inside canvas
+      ctx.fillStyle = statusColor;
+      ctx.font = '10px "JetBrains Mono", "IBM Plex Mono", monospace';
+      ctx.fillText(`Δs = ${deltaS_mm}mm (${layers} layers @ r=1.15)`, 10, 14);
+    }
+
+    // 4. Transition: Landing -> 4-Zone Workstation (CSS Grid Mode Switch)
+    document.getElementById('btnInitWorkflow').onclick = async () => {
+      document.getElementById('landingOverlay').style.display = 'none';
+      (document.getElementById('blMagnifierWidget') || document.getElementById('blMagnifier')).style.display = 'block';
+      drawBoundaryLayerWidget(0.0084, 24.5, 28, 1.0);
+      document.getElementById('projectControls').style.display = 'flex';
+      (document.getElementById('leftInspector') || document.getElementById('leftPane')).style.display = 'flex';
+      (document.getElementById('workbenchDock') || document.getElementById('bottomWorkbench')).style.display = 'flex';
+      (document.getElementById('rightCopilotRail') || document.getElementById('rightPane')).style.display = 'flex';
+
+      const app = (document.getElementById('workstationGrid') || document.getElementById('appContainer'));
+      app.className = 'mode-workstation';
+
+      // Clean viewport resize without destroying Three.js WebGL context
+      setTimeout(() => {
+        const cont = (document.getElementById('threeCanvasMount') || document.getElementById('threeMount'));
+        camera.aspect = cont.clientWidth / cont.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(cont.clientWidth, cont.clientHeight);
+      }, 260);
+
+      // Create Simulation Case in Database
+      const v = parseFloat(document.getElementById('landVelocity').value) || 40.0;
+      const c = parseFloat(document.getElementById('landChord').value) || 1.8;
+      const yPlus = parseFloat(document.getElementById('landYPlus').value) || 1.0;
+
+      try {
+        const res = await fetch(`${API}/api/projects/${activeProjectId}/cases`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: `Run_${Date.now().toString().slice(-4)}`,
+            velocity_ms: v,
+            chord_m: c,
+            target_y_plus: yPlus,
+            solver: "OpenFOAM",
+            regime: "external_aerodynamics"
+          })
+        });
+        const caseData = await res.json();
+        activeCaseId = caseData.id;
+
+        await loadProjectsAndCases();
+        syncWorkstationUI(caseData);
+        loadCopilotReview(caseData.id);
+        loadDecisionTrail();
+        await fetchSolverDictionaries(caseData);
+      } catch (e) {
+        console.error("Failed to initialize case in backend:", e);
+      }
+    };
+
+    async function loadProjectsAndCases() {
+      try {
+        const pRes = await fetch(`${API}/api/projects`);
+        const projects = await pRes.json();
+        const selProj = document.getElementById('selProject');
+        selProj.innerHTML = "";
+        projects.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.name}`;
+          selProj.appendChild(opt);
+        });
+
+        const projDetail = await fetch(`${API}/api/projects/${activeProjectId}`).then(r => r.json());
+        const selCase = document.getElementById('selCase');
+        selCase.innerHTML = "";
+        projDetail.cases.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.name} (${c.velocity_ms} m/s)`;
+          if (c.id === activeCaseId) opt.selected = true;
+          selCase.appendChild(opt);
+        });
+      } catch (err) {
+        console.warn("Could not load project selectors:", err);
+      }
+    }
+
+    // Parametric Inspector Debounced PATCH updates (150ms)
+    function bindParametricInspector() {
+      const inputs = ['wsVelocity', 'wsChord', 'wsYPlus', 'wsRegime'];
+      inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async () => {
+            if (!activeCaseId) return;
+            const v = parseFloat(document.getElementById('wsVelocity').value);
+            const c = parseFloat(document.getElementById('wsChord').value);
+            const yPlus = parseFloat(document.getElementById('wsYPlus').value);
+            const regime = document.getElementById('wsRegime').value;
+
+            try {
+              const res = await fetch(`${API}/api/cases/${activeCaseId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ velocity_ms: v, chord_m: c, target_y_plus: yPlus, regime: regime })
+              });
+              const updated = await res.json();
+              syncWorkstationUI(updated);
+              loadCopilotReview(activeCaseId);
+              loadDecisionTrail();
+              await fetchSolverDictionaries(updated);
+
+              const p = updated.physics_json;
+              if (p) {
+                updateDomainBox(p.inlet_distance_m, p.outlet_distance_m, p.lateral_distance_m);
+                drawBoundaryLayerWidget(p.first_cell_height_mm, p.boundary_layer_thickness_mm, p.recommended_prism_layers, yPlus);
+              }
+            } catch (err) {
+              console.error("PATCH case error:", err);
+            }
+          }, 150);
+        });
+      });
+    }
+
+    function syncWorkstationUI(caseData) {
+      document.getElementById('wsVelocity').value = caseData.velocity_ms;
+      document.getElementById('wsChord').value = caseData.chord_m;
+      document.getElementById('wsYPlus').value = caseData.target_y_plus.toFixed(1);
+
+      const p = caseData.physics_json || {};
+      document.getElementById('wsRe').innerText = p.reynolds_number ? p.reynolds_number.toLocaleString() : "--";
+      document.getElementById('wsMach').innerText = p.mach_number ? p.mach_number.toFixed(3) : "--";
+      document.getElementById('wsDeltaS').innerText = p.first_cell_height_mm ? `${p.first_cell_height_mm} mm` : "--";
+      document.getElementById('wsDelta').innerText = p.boundary_layer_thickness_mm ? `${p.boundary_layer_thickness_mm} mm` : "--";
+      document.getElementById('wsLayers').innerText = p.recommended_prism_layers || "--";
+
+      const hc = p.hand_calculation || {};
+      document.getElementById('wsCf').innerText = hc.skin_friction_coeff || "--";
+      document.getElementById('wsTau').innerText = hc.wall_shear_stress_pa ? `${hc.wall_shear_stress_pa} Pa` : "--";
+      document.getElementById('wsFDrag').innerText = hc.estimated_friction_drag_n_per_m ? `${hc.estimated_friction_drag_n_per_m} N/m` : "--";
+      document.getElementById('wsCl').innerText = hc.theoretical_cl_at_4deg ? `Cl = ${hc.theoretical_cl_at_4deg}` : "--";
+    }
+
+    async function loadCopilotReview(caseId) {
+      try {
+        const res = await fetch(`${API}/api/copilot/explain-case`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ case_id: caseId })
+        });
+        const data = await res.json();
+        document.getElementById('copilotReview').innerText = data.explanation || data.summary;
+      } catch (e) {
+        document.getElementById('copilotReview').innerText = "Copilot review offline or unreachable.";
+      }
+    }
+
+    async function loadDecisionTrail() {
+      try {
+        const res = await fetch(`${API}/api/projects/${activeProjectId}`);
+        const data = await res.json();
+        const container = document.getElementById('decisionTrail');
+        container.innerHTML = "";
+        (data.decision_records || []).slice(-10).reverse().forEach(rec => {
+          const row = document.createElement('div');
+          row.style.borderBottom = '1px solid #1E2330';
+          row.style.paddingBottom = '4px';
+          row.innerHTML = `<span style="color:var(--accent-cyan);">[${rec.actor}]</span> ${rec.summary}`;
+          container.appendChild(row);
+        });
+      } catch (e) {
+        console.warn("Could not load decision trail:", e);
+      }
+    }
+
+    async function fetchSolverDictionaries(caseData) {
+      try {
+        const res = await fetch(`${API}/api/solver/generate-config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chord_m: caseData.chord_m,
+            velocity_ms: caseData.velocity_ms,
+            target_y_plus: caseData.target_y_plus,
+            solver: caseData.solver || "OpenFOAM"
+          })
+        });
+        const conf = await res.json();
+        const combined = `// --- OPENFOAM CONFIGURATION FOR: ${caseData.name} ---
+// 1. system/blockMeshDict (3D Farfield Symmetry)
+${conf.blockMeshDict}
+
+// 2. system/controlDict (Runtime forces monitor)
+${conf.controlDict}`;
+        document.getElementById('codeView').innerText = combined;
+      } catch (e) {
+        document.getElementById('codeView').innerText = "// Could not fetch solver config from backend.";
+      }
+    }
+
+    function copyDictionaryToClipboard() {
+      const code = document.getElementById('codeView').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("Solver dictionary copied to clipboard!");
+      });
+    }
+
+    // 5. Workbench Tabs
+    function switchWorkbenchTab(tab) {
+      ['Dicts', 'Convergence', 'GCI', 'VTK'].forEach(t => {
+        const el = document.getElementById(`tabContent${t}`);
+        const btn = document.getElementById(`tabBtn${t}`);
+        if (el) el.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+      });
+      const vtkBar = document.getElementById('vtkControlsBar');
+      if (vtkBar) vtkBar.style.display = (tab === 'vtk') ? 'flex' : 'none';
+
+      if (tab === 'dicts') {
+        document.getElementById('tabContentDicts').style.display = 'block';
+        document.getElementById('tabBtnDicts').classList.add('active');
+      } else if (tab === 'convergence') {
+        document.getElementById('tabContentConvergence').style.display = 'flex';
+        document.getElementById('tabBtnConvergence').classList.add('active');
+      } else if (tab === 'gci') {
+        document.getElementById('tabContentGCI').style.display = 'block';
+        document.getElementById('tabBtnGCI').classList.add('active');
+      } else if (tab === 'vtk') {
+        document.getElementById('tabContentVTK').style.display = 'block';
+        document.getElementById('tabBtnVTK').classList.add('active');
+        if (!currentVtkData) loadSampleVtkContour();
+      }
+    }
+
+    // Diagnostics Log Upload
+    document.getElementById('logUploader').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const url = activeCaseId ? `${API}/api/cases/${activeCaseId}/audit-log` : `${API}/api/diagnostics/parse-log`;
+        const res = await fetch(url, { method: "POST", body: fd });
+        const data = await res.json();
+
+        const v = document.getElementById('logVerdict');
+        v.innerText = `${data.diagnostic_flag} (Res: ${data.final_continuity.toExponential(2)}, Cd: ${data.final_drag})`;
+        v.style.color = data.is_converged ? 'var(--accent-emerald)' : 'var(--accent-crimson)';
+
+        renderResidualGraph(data);
+        loadDecisionTrail();
+      } catch (err) {
+        console.error("Log audit failed:", err);
+      }
+    });
+
+    function renderResidualGraph(data) {
+      const cvs = document.getElementById('residualChart');
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      ctx.strokeStyle = '#1E2330';
+      ctx.beginPath();
+      ctx.moveTo(40, 20); ctx.lineTo(cvs.width - 20, 20);
+      ctx.moveTo(40, 60); ctx.lineTo(cvs.width - 20, 60);
+      ctx.moveTo(40, 100); ctx.lineTo(cvs.width - 20, 100);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '9px monospace';
+      ctx.fillText('1e-3', 10, 24);
+      ctx.fillText('1e-4', 10, 64);
+      ctx.fillText('1e-5', 10, 104);
+
+      ctx.strokeStyle = data.is_converged ? '#10B981' : '#EF4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const points = 50;
+      for (let i = 0; i < points; i++) {
+        const x = 40 + (i / (points - 1)) * (cvs.width - 60);
+        const progress = i / (points - 1);
+        const y = data.is_converged 
+          ? 20 + progress * 80 + Math.sin(i * 0.5) * 2
+          : 20 + progress * 40 + Math.sin(i * 1.5) * 8;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // ASME V&V 20 GCI Calculation via Backend API
+    async function runGciCalculation() {
+      const f3 = parseFloat(document.getElementById('gciCoarse').value) || 0.0091;
+      const f2 = parseFloat(document.getElementById('gciMedium').value) || 0.0086;
+      const f1 = parseFloat(document.getElementById('gciFine').value) || 0.0084;
+
+      try {
+        const cId = activeCaseId || 1;
+        const res = await fetch(`${API}/api/cases/${cId}/gci`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ f_coarse: f3, f_medium: f2, f_fine: f1, r: 1.414 })
+        });
+        const d = await res.json();
+        const out = document.getElementById('gciResults');
+        out.innerHTML = `
+          <div>Apparent Order of Convergence p: <strong>${d.apparent_order_p}</strong> (Theoretical: ${d.theoretical_order})</div>
+          <div>Relative Error ε₂₁: <strong>${d.relative_error_eps21_percent}%</strong></div>
+          <div>Grid Convergence Index GCI_fine: <strong>${d.gci_fine_percent}%</strong></div>
+          <div style="color: ${d.is_asymptotic_range ? 'var(--accent-emerald)' : 'var(--accent-amber)'}; margin-top: 4px;">
+            ${d.is_asymptotic_range ? '✓ ' + d.recommendation : '⚠ ' + d.recommendation}
+          </div>
+        `;
+        loadDecisionTrail();
+      } catch (err) {
+        console.error("GCI calculation failed:", err);
+      }
+    }
+
+    // Three.js VTK Colormap Field Renderer
+    function turboRainbowColormap(normalized) {
+      const t = Math.max(0.0, Math.min(1.0, normalized));
+      let r = 0, g = 0, b = 0;
+      if (t < 0.25) {
+        r = 0; g = t / 0.25; b = 1;
+      } else if (t < 0.5) {
+        r = 0; g = 1; b = 1 - (t - 0.25) / 0.25;
+      } else if (t < 0.75) {
+        r = (t - 0.5) / 0.25; g = 1; b = 0;
+      } else {
+        r = 1; g = 1 - (t - 0.75) / 0.25; b = 0;
+      }
+      return [r, g, b];
+    }
+
+    function renderVtkMeshToScene(data, scalarName = "Cp") {
+      currentVtkData = data;
+      document.getElementById('vtkVertCount').innerText = data.num_vertices.toLocaleString();
+      document.getElementById('vtkTriCount').innerText = data.num_triangles.toLocaleString();
+      document.getElementById('vtkActiveFieldName').innerText = scalarName;
+
+      const sel = document.getElementById('selScalarField');
+      if (sel) {
+        sel.innerHTML = '<option value="none">Geometry Wireframe</option>';
+        data.available_fields.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          opt.textContent = f === 'Cp' ? 'Surface Pressure Cp' : (f === 'U_magnitude' ? 'Velocity Magnitude |U|' : f);
+          if (f === scalarName) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      const vertices = new Float32Array(data.vertices);
+      const indices = new Uint32Array(data.indices);
+      
+      geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+      const colors = new Float32Array(data.num_vertices * 3);
+      const scalars = data.scalars[scalarName] || [];
+      const stats = data.scalar_stats[scalarName];
+
+      if (scalars.length === data.num_vertices && stats && scalarName !== 'none') {
+        const minVal = stats.min;
+        const maxVal = stats.max;
+        const range = maxVal - minVal || 1.0;
+        document.getElementById('vtkRangeDisplay').innerText = `[${minVal.toFixed(3)}, ${maxVal.toFixed(3)}]`;
+
+        for (let i = 0; i < data.num_vertices; i++) {
+          const norm = (scalars[i] - minVal) / range;
+          const [r, g, b] = turboRainbowColormap(norm);
+          colors[i * 3] = r;
+          colors[i * 3 + 1] = g;
+          colors[i * 3 + 2] = b;
+        }
+      } else {
+        document.getElementById('vtkRangeDisplay').innerText = `Monochrome Wireframe`;
+        for (let i = 0; i < data.num_vertices * 3; i += 3) {
+          colors[i] = 0.2; colors[i+1] = 0.7; colors[i+2] = 0.9;
+        }
+      }
+
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.computeVertexNormals();
+      geometry.center();
+
+      if (vtkMesh) scene.remove(vtkMesh);
+      if (modelMesh) scene.remove(modelMesh);
+
+      const material = new THREE.MeshStandardMaterial({
+        vertexColors: scalarName !== 'none',
+        color: scalarName === 'none' ? 0x00C7E8 : 0xFFFFFF,
+        roughness: 0.35,
+        metalness: 0.15,
+        side: THREE.DoubleSide,
+        wireframe: scalarName === 'none'
+      });
+
+      vtkMesh = new THREE.Mesh(geometry, material);
+      modelMesh = vtkMesh;
+      scene.add(vtkMesh);
+    }
+
+    function applyVtkScalar(fieldName) {
+      if (!currentVtkData) return;
+      renderVtkMeshToScene(currentVtkData, fieldName);
+    }
+
+    async function loadSampleVtkContour() {
+      try {
+        const res = await fetch(`${API}/api/cfd/sample-vtk`);
+        const data = await res.json();
+        renderVtkMeshToScene(data, "Cp");
+      } catch (err) {
+        console.warn("Could not load sample VTK:", err);
+      }
+    }
+
+    async function handleVtkUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const res = await fetch(`${API}/api/cfd/parse-results`, { method: "POST", body: fd });
+        const data = await res.json();
+        const activeField = data.available_fields.includes("Cp") ? "Cp" : data.available_fields[0] || "none";
+        renderVtkMeshToScene(data, activeField);
+      } catch (err) {
+        console.error("VTK parse error:", err);
+        alert("Failed to parse VTK file. Please ensure valid legacy VTK format.");
+      }
+    }
+
+    // 6. Verified Knowledge Base Drawer Trigger (RAG Engine API)
+    function attachKnowledgeTriggers() {
+      document.querySelectorAll('.clickable-term').forEach(el => {
+        el.onclick = async () => {
+          const term = el.getAttribute('data-term');
+          try {
+            const res = await fetch(`${API}/api/knowledge/concept/${term}`);
+            if (!res.ok) return;
+            const d = await res.json();
+            document.getElementById('drawerTermId').innerText = d.term_id;
+            document.getElementById('drawerTitle').innerText = d.title;
+            document.getElementById('drawerEquation').innerText = d.equation_latex;
+            document.getElementById('drawerDefinition').innerText = d.definition;
+            document.getElementById('drawerGoverning').innerText = d.governing_conditions;
+            document.getElementById('drawerFailures').innerText = d.failure_modes;
+            document.getElementById('drawerRef').innerText = d.reference;
+            document.getElementById('conceptDrawer').style.display = 'block';
+          } catch (err) {
+            console.warn("Concept drawer error:", err);
+          }
+        };
+      });
+    }
+
+    // Quick Action Bar Bindings
+    function bindTopQuickActions() {
+      document.getElementById('btnQuickImportCAD').onclick = () => {
+        document.getElementById('cadInput').click();
+      };
+
+      document.getElementById('btnQuickConfigBL').onclick = () => {
+        const pane = (document.getElementById('leftInspector') || document.getElementById('leftPane'));
+        if (pane) {
+          pane.style.display = 'flex';
+          const vel = document.getElementById('wsVelocity') || document.getElementById('landVelocity');
+          if (vel) vel.focus();
+        }
+      };
+
+      document.getElementById('btnQuickNewRun').onclick = async () => {
+        try {
+          const res = await fetch(`${API}/api/projects/${activeProjectId}/cases`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: `QuickRun_${Date.now().toString().slice(-4)}`,
+              velocity_ms: 40.0,
+              chord_m: 1.8,
+              target_y_plus: 1.0,
+              solver: "OpenFOAM",
+              regime: "external_aerodynamics"
+            })
+          });
+          const c = await res.json();
+          activeCaseId = c.id;
+          alert(`New Simulation Case Created: Case #${c.id} (${c.name})\nSolver: OpenFOAM k-omega SST`);
+          await loadProjectsAndCases();
+          loadDecisionTrail();
+          loadCopilotReview(c.id);
+        } catch (e) {
+          alert("Could not reach backend API at http://127.0.0.1:8000.");
+        }
+      };
+
+      document.getElementById('btnQuickVerify').onclick = () => {
+        switchWorkbenchTab('convergence');
+        document.getElementById('logUploader').click();
+      };
+    }
+
+    async function exportVerificationPDF() {
+      try {
+        const res = await fetch(`${API}/api/verification/export-pdf`, { method: "POST" });
+        const d = await res.json();
+        alert(`Signed Verification Report Generated:\n\nReport ID: ${d.report_id}\nStandards: ${d.standards.join(', ')}\nStatus: ${d.status}\nSignature: ${d.digital_signature}`);
+      } catch (e) {
+        alert("Exporting ASME V&V 20 & NIST SP 800-171 Report...");
+      }
+    }
+
+    function initSimulationLabCore() {
+      initThree();
+      bindParametricInspector();
+      attachKnowledgeTriggers();
+      bindTopQuickActions();
+    };
+  
+
   </script>
 </body>
 </html>

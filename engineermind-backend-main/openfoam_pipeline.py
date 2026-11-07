@@ -41,8 +41,11 @@ def setup_openfoam_case_directory(case_id: int, chord_m: float, velocity_ms: flo
     with open(os.path.join(system_dir, "blockMeshDict"), "w", encoding="utf-8") as f:
         f.write(generate_block_mesh_dict(chord_m=chord_m))
 
+    surf_dict_str = generate_surface_features_dict(stl_filename=stl_filename)
+    with open(os.path.join(system_dir, "surfaceFeatureExtractDict"), "w", encoding="utf-8") as f:
+        f.write(surf_dict_str)
     with open(os.path.join(system_dir, "surfaceFeaturesDict"), "w", encoding="utf-8") as f:
-        f.write(generate_surface_features_dict(stl_filename=stl_filename))
+        f.write(surf_dict_str)
 
     layers = 28 if target_y_plus <= 1.0 else 12
     first_cell_mm = 0.0084 if target_y_plus <= 1.0 else 0.25
@@ -149,13 +152,13 @@ async def run_openfoam_subprocess_pipeline(case_id: int):
     has_openfoam = check_openfoam_installed()
 
     if not has_openfoam:
-        append_log("NOTICE: OpenFOAM binaries (blockMesh/simpleFoam) not detected on host system PATH.")
-        append_log("Executing synthetic high-fidelity 3D aerodynamics simulation runner...")
+        append_log("NOTICE: Real OpenFOAM runtime not detected on host system PATH.")
+        append_log("Executing deterministic synthetic aerodynamic fallback pipeline (labeled SYNTHETIC_SIMULATION)...")
         
         # Simulate realistic step-by-step pipeline
         steps = [
             ("BLOCKMESH", "blockMesh: 3D farfield hex domain mesh generated (vertices: 8, cells: 48,000). Patches: inlet, outlet, topBottomFrontBack (symmetry)."),
-            ("SURFACEFEATURES", "surfaceFeatures: Extracted feature edges for wing.stl (includedAngle: 150 deg)."),
+            ("SURFACEFEATUREEXTRACT", "surfaceFeatureExtract: Extracted feature edges for wing.stl (includedAngle: 150 deg)."),
             ("SNAPPY", "snappyHexMesh -overwrite: Castellated, snapped, and prism layer addition completed (28 boundary layers, r=1.15)."),
             ("CHECKMESH", "checkMesh: Mesh OK. Maximum non-orthogonality = 32.1 deg, max skewness = 1.45."),
             ("SOLVING", "simpleFoam: Solving steady-state incompressible Navier-Stokes with k-omega SST.")
@@ -188,27 +191,28 @@ async def run_openfoam_subprocess_pipeline(case_id: int):
             f.write("iter 500 continuity 8.4e-6 Cd 0.00845\n")
             f.write("End: SimpleFoam completed with convergence criteria reached.\n")
 
-        append_log("Convergence achieved: Continuity = 8.4e-06 < 1e-05, Cd = 0.00845 (PASSED).")
-        CASE_EXECUTION_STATE[case_id]["status"] = "CONVERGED"
-        CASE_EXECUTION_STATE[case_id]["step"] = "CONVERGED"
+        append_log("Convergence achieved: Continuity = 8.4e-06 < 1e-05, Cd = 0.00845 (SYNTHETIC_SIMULATION).")
+        CASE_EXECUTION_STATE[case_id]["status"] = "SYNTHETIC_SIMULATION"
+        CASE_EXECUTION_STATE[case_id]["step"] = "SYNTHETIC_SIMULATION"
         CASE_EXECUTION_STATE[case_id]["is_completed"] = True
 
-        # Update database
-        case.status = "PASSED"
-        case.pipeline_step = "CONVERGED"
+        # Update database with explicit provenance flagging
+        case.status = "SYNTHETIC_SIMULATION"
+        case.pipeline_step = "SYNTHETIC_SIMULATION"
         case.diagnostics_json = {
             "total_iterations": 500,
             "final_continuity": 8.4e-6,
             "final_drag": 0.00845,
             "drag_std_dev": 0.000008,
             "is_converged": True,
-            "diagnostic_flag": "PASSED: True Asymptotic Convergence",
-            "host_openfoam_detected": False
+            "diagnostic_flag": "SYNTHETIC_SIMULATION: Estimated Aerodynamic Metrics (Synthetic Fallback)",
+            "host_openfoam_detected": False,
+            "execution_mode": "SYNTHETIC_FALLBACK"
         }
         dec = DecisionRecord(
             project_id=case.project_id,
-            actor="OpenFOAM Pipeline",
-            summary=f"E2E Simulation Completed for Case #{case_id}: PASSED (Continuity: 8.4e-06, Cd: 0.00845)"
+            actor="OpenFOAM Pipeline (Synthetic Fallback)",
+            summary=f"Synthetic Simulation Completed for Case #{case_id}: SYNTHETIC_SIMULATION (Continuity: 8.4e-06, Cd: 0.00845)"
         )
         db.add(dec)
         db.commit()
@@ -219,7 +223,7 @@ async def run_openfoam_subprocess_pipeline(case_id: int):
     try:
         commands = [
             ("BLOCKMESH", ["blockMesh"]),
-            ("SURFACEFEATURES", ["surfaceFeatures"]),
+            ("SURFACEFEATUREEXTRACT", ["surfaceFeatureExtract"]),
             ("SNAPPY", ["snappyHexMesh", "-overwrite"]),
             ("CHECKMESH", ["checkMesh"]),
             ("SOLVING", ["simpleFoam"])

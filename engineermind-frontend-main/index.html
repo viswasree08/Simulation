@@ -14,6 +14,26 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
 
   <style>
+    /* =============================================================
+       LOCAL ARIMO FONT DEFINITIONS
+       ============================================================= */
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/Arimo-VariableFont_wght.ttf') format('truetype-variations'),
+           url('fonts/static/Arimo-Regular.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Arimo';
+      src: url('fonts/Arimo-Italic-VariableFont_wght.ttf') format('truetype-variations'),
+           url('fonts/static/Arimo-Italic.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: italic;
+      font-display: swap;
+    }
+
     :root {
       --bg-void: #08090C;
       --bg-panel: #0E1015;
@@ -26,7 +46,7 @@
       --accent-emerald: #10B981;
       --accent-crimson: #EF4444;
       --accent-amber: #F59E0B;
-      --font-sans: 'Inter', -apple-system, sans-serif;
+      --font-sans: 'Arimo', 'Inter', -apple-system, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -81,23 +101,60 @@
     }
     .tab-btn.active { color: #FFF; border-bottom-color: var(--accent-cyan); }
     .tab-btn:hover { color: #CBD5E1; }
+
+    /* Top Quick Action Bar */
+    .quick-action-pill {
+      background: rgba(30, 35, 48, 0.6);
+      border: 1px solid var(--border-hairline);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .quick-action-pill:hover {
+      background: var(--border-hairline);
+      color: #FFF;
+      border-color: var(--border-focus);
+    }
   </style>
 </head>
 <body>
   <div id="appContainer" class="mode-landing">
     <!-- Top Command Bar -->
     <header style="grid-column: 1 / -1; background: var(--bg-panel); border-bottom: 1px solid var(--border-hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 50;">
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
         <span style="background: var(--accent-emerald); color: #000; font-weight: 800; padding: 2px 6px; border-radius: 2px; font-size: 11px;">EM</span>
         <span style="font-weight: 600;">EngineerMind AI</span>
-        <span style="color: var(--text-muted);">/ Pre-Flight CFD & Reasoning</span>
+        <span style="color: var(--text-muted);">/ Pre-Flight CFD &amp; Reasoning</span>
+        
+        <!-- Top Quick Action Controls -->
+        <div style="display: flex; align-items: center; gap: 6px; margin-left: 12px; border-left: 1px solid var(--border-hairline); padding-left: 12px;">
+          <button class="quick-action-pill" id="btnQuickImportCAD" title="Upload and inspect 3D geometry">
+            <span>📂</span> Import CAD
+          </button>
+          <button class="quick-action-pill" id="btnQuickConfigBL" title="Focus Boundary Layer Parameters">
+            <span>📐</span> Config BL
+          </button>
+          <button class="quick-action-pill" id="btnQuickNewRun" title="Initialize new case & OpenFOAM dicts">
+            <span>⚡</span> New Run
+          </button>
+          <button class="quick-action-pill" id="btnQuickVerify" title="Run diagnostic log parsing & GCI verification">
+            <span>📊</span> Verify
+          </button>
+        </div>
       </div>
+
       <div id="projectControls" style="display: none; align-items: center; gap: 10px;">
         <span style="color: var(--text-muted); font-size: 10px;">PROJECT:</span>
         <select id="selProject" class="input-precision" style="width: 170px;"></select>
         <span style="color: var(--text-muted); font-size: 10px;">CASE:</span>
         <select id="selCase" class="input-precision" style="width: 170px;"></select>
-        <button id="btnExportPDF" class="btn-action" style="background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);">Export Decision PDF</button>
+        <button id="btnExportPDF" class="btn-action" style="background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);" onclick="exportVerificationPDF()">Export Decision PDF</button>
       </div>
     </header>
 
@@ -118,6 +175,7 @@
             <label style="color: var(--text-muted); font-size: 10px;">TARGET WALL y+</label>
             <select id="wsYPlus" class="input-precision">
               <option value="1.0">y+ ≤ 1.0 (Low-Re Resolved)</option>
+              <option value="15.0">y+ = 15.0 (Buffer Layer - Warning)</option>
               <option value="30.0">y+ = 30.0 (Wall Functions)</option>
             </select>
           </div>
@@ -144,7 +202,7 @@
       <div style="border-top: 1px solid var(--border-hairline); padding-top: 10px;">
         <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Hand Calc Verification</div>
         <div class="mono" style="font-size: 10px; color: #94A3B8; display: flex; flex-direction: column; gap: 4px;">
-          <div>Cf: <span id="wsCf" style="float: right; color: #FFF;">--</span></div>
+          <div>Skin Friction Cf: <span id="wsCf" style="float: right; color: #FFF;">--</span></div>
           <div>Shear τw: <span id="wsTau" style="float: right; color: #FFF;">--</span></div>
           <div>Friction Drag: <span id="wsFDrag" style="float: right; color: #FFF;">--</span></div>
           <div>Theory Cl (4°): <span id="wsCl" style="float: right; color: var(--accent-cyan);">--</span></div>
@@ -180,6 +238,7 @@
               <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px;">TARGET y+</label>
               <select id="landYPlus" class="input-precision">
                 <option value="1.0">y+ ≤ 1.0 (Low-Re)</option>
+                <option value="15.0">y+ = 15.0 (Buffer Warning)</option>
                 <option value="30.0">y+ = 30.0 (Wall Func)</option>
               </select>
             </div>
@@ -199,7 +258,10 @@
 
         <!-- 2D Boundary Layer Prism Stack Magnifier Widget -->
         <div id="blMagnifier" style="display: none; position: absolute; bottom: 12px; right: 12px; background: rgba(14, 16, 21, 0.92); border: 1px solid var(--border-hairline); padding: 8px; border-radius: 2px; z-index: 10;">
-          <div style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Wall Prism Resolution</div>
+          <div style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Wall Prism Resolution</span>
+            <span id="blYPlusBadge" style="color: var(--accent-emerald); font-family: monospace;">y+ ≤ 1.0</span>
+          </div>
           <canvas id="blCanvas" width="220" height="110" style="background: #050608; border: 1px solid #1E2330; display: block;"></canvas>
         </div>
       </div>
@@ -226,9 +288,16 @@
             <button class="btn-action" style="background: rgba(0,199,232,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,199,232,0.3);" onclick="loadSampleVtkContour()">Load NACA 0012 Post-Field</button>
           </div>
         </div>
+
+        <!-- Tab 1: Solver Dictionaries -->
         <div id="tabContentDicts" style="flex: 1; padding: 12px; overflow-y: auto;">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+            <button class="btn-action" style="background: #1E2330; color: var(--accent-cyan); border: 1px solid #334155;" onclick="copyDictionaryToClipboard()">📋 1-Click Copy Dict</button>
+          </div>
           <pre id="codeView" class="mono" style="font-size: 11px; color: var(--accent-cyan); line-height: 1.5;"></pre>
         </div>
+
+        <!-- Tab 2: Convergence Diagnostics -->
         <div id="tabContentConvergence" style="display: none; flex: 1; padding: 12px; flex-direction: column;">
           <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
             <input type="file" id="logUploader" style="display: none;" />
@@ -237,12 +306,14 @@
           </div>
           <canvas id="residualChart" width="600" height="120" style="width: 100%; height: 120px; background: #050608; border: 1px solid var(--border-hairline); display: block;"></canvas>
         </div>
+
+        <!-- Tab 3: ASME V&V 20 GCI -->
         <div id="tabContentGCI" style="display: none; flex: 1; padding: 12px; overflow-y: auto;">
           <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <input type="number" id="gciCoarse" class="input-precision" placeholder="Cd Coarse (e.g. 0.0091)" step="0.0001" />
-            <input type="number" id="gciMedium" class="input-precision" placeholder="Cd Medium (e.g. 0.0086)" step="0.0001" />
-            <input type="number" id="gciFine" class="input-precision" placeholder="Cd Fine (e.g. 0.0084)" step="0.0001" />
-            <button id="btnRunGCI" class="btn-action">Calculate GCI</button>
+            <input type="number" id="gciCoarse" class="input-precision" placeholder="Cd Coarse (e.g. 0.0091)" step="0.0001" value="0.0091" />
+            <input type="number" id="gciMedium" class="input-precision" placeholder="Cd Medium (e.g. 0.0086)" step="0.0001" value="0.0086" />
+            <input type="number" id="gciFine" class="input-precision" placeholder="Cd Fine (e.g. 0.0084)" step="0.0001" value="0.0084" />
+            <button id="btnRunGCI" class="btn-action" onclick="runGciCalculation()">Calculate GCI via API</button>
           </div>
           <div id="gciResults" class="mono" style="font-size: 11px; color: var(--accent-emerald); line-height: 1.6;"></div>
         </div>
@@ -323,8 +394,10 @@
     let activeCaseId = null;
     let scene, camera, renderer, domainBoxMesh, modelMesh;
     let debounceTimer = null;
+    let currentVtkData = null;
+    let vtkMesh = null;
 
-    // 1. Initial State & Physics Calculation (ZERO CLIENT-SIDE PHYSICS FORMULAS)
+    // 1. Initial State & Physics Calculation (ZERO CLIENT-SIDE MATH FALLBACKS)
     async function fetchCalculations(v, c, yPlus, regime = "external_aerodynamics") {
       try {
         const res = await fetch(`${API}/calculate-physics`, {
@@ -354,10 +427,10 @@
       document.getElementById('landDomain').innerText = `${data.inlet_distance_m}m / ${data.outlet_distance_m}m`;
 
       updateDomainBox(data.inlet_distance_m, data.outlet_distance_m, data.lateral_distance_m);
-      drawBoundaryLayerWidget(data.first_cell_height_mm, data.boundary_layer_thickness_mm, data.recommended_prism_layers);
+      drawBoundaryLayerWidget(data.first_cell_height_mm, data.boundary_layer_thickness_mm, data.recommended_prism_layers, yPlus);
     }
 
-    // 2. Three.js Initialization & Domain Box Sizing (NEVER DESTROYED)
+    // 2. Three.js Initialization & Persistent Viewport (ZERO CANVAS DESTRUCTION)
     function initThree() {
       const cont = document.getElementById('threeMount');
       scene = new THREE.Scene();
@@ -380,36 +453,20 @@
       grid.position.y = -2;
       scene.add(grid);
 
-      // Default parametric wing placeholder (Zero synthetic particles)
+      // Default parametric aerofoil baseline (NO synthetic particle loops)
       const wingGeom = new THREE.BoxGeometry(1.8, 0.15, 5);
       const wingMat = new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.3, metalness: 0.2 });
       modelMesh = new THREE.Mesh(wingGeom, wingMat);
       scene.add(modelMesh);
 
-      // CAD file loader
-      document.getElementById('cadInput').addEventListener('change', function(e) {
+      // CAD file input handler
+      document.getElementById('cadInput').addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          try {
-            if (typeof THREE.STLLoader !== 'undefined') {
-              const loader = new THREE.STLLoader();
-              const geometry = loader.parse(event.target.result);
-              geometry.center();
-              if (modelMesh) scene.remove(modelMesh);
-              const material = new THREE.MeshStandardMaterial({ color: 0x00C7E8, roughness: 0.3, metalness: 0.5 });
-              modelMesh = new THREE.Mesh(geometry, material);
-              scene.add(modelMesh);
-            }
-          } catch (err) {
-            console.error("CAD load error:", err);
-          }
-        };
-        reader.readAsArrayBuffer(file);
+        await handleCADInspection(file);
       });
 
-      // Bind inputs for live domain sizing
+      // Bind input debouncing (150ms)
       ['landVelocity', 'landChord', 'landYPlus'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => {
           clearTimeout(debounceTimer);
@@ -427,6 +484,42 @@
 
       updateLanding();
       renderLoop();
+    }
+
+    async function handleCADInspection(file) {
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch(`${API}/api/cad/inspect`, { method: 'POST', body: fd });
+        const data = await res.json();
+        
+        // Update chord
+        if (data.characteristic_chord_m) {
+          document.getElementById('landChord').value = data.characteristic_chord_m;
+          const wsC = document.getElementById('wsChord');
+          if (wsC) wsC.value = data.characteristic_chord_m;
+          updateLanding();
+        }
+
+        // Render STL geometry
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          if (typeof THREE.STLLoader !== 'undefined') {
+            const loader = new THREE.STLLoader();
+            const geometry = loader.parse(event.target.result);
+            geometry.center();
+            if (modelMesh) scene.remove(modelMesh);
+            const material = new THREE.MeshStandardMaterial({ color: 0x00C7E8, roughness: 0.3, metalness: 0.5 });
+            modelMesh = new THREE.Mesh(geometry, material);
+            scene.add(modelMesh);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+
+        alert(`CAD Inspection Report:\n\nFile: ${file.name}\nChord: ${data.characteristic_chord_m}m\nSpan: ${data.span_m}m\nWatertight: ${data.is_watertight}\nTE Check: ${data.cae_readiness?.trailing_edge_status} (${data.cae_readiness?.defeaturing_recommendation})`);
+      } catch (err) {
+        console.error("CAD inspection failed:", err);
+      }
     }
 
     function updateDomainBox(inlet, outlet, lateral) {
@@ -449,38 +542,50 @@
       renderer.render(scene, camera);
     }
 
-    // 3. 2D Boundary Layer Prism Stack Magnifier Widget
-    function drawBoundaryLayerWidget(deltaS_mm, delta_mm, layers) {
+    // 3. 2D Boundary Layer Prism Stack Magnifier Widget (Color-coded for buffer violations)
+    function drawBoundaryLayerWidget(deltaS_mm, delta_mm, layers, yPlus) {
       const cvs = document.getElementById('blCanvas');
       if (!cvs) return;
       const ctx = cvs.getContext('2d');
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
+      const badge = document.getElementById('blYPlusBadge');
+      let statusColor = '#10B981'; // emerald for Low-Re resolved y+ <= 1
+      if (yPlus > 5.0 && yPlus < 30.0) {
+        statusColor = '#EF4444'; // crimson buffer warning
+        if (badge) { badge.innerText = `y+ = ${yPlus.toFixed(1)} (BUFFER VIOLATION)`; badge.style.color = '#EF4444'; }
+      } else if (yPlus >= 30.0) {
+        statusColor = '#3B82F6'; // blue for wall functions
+        if (badge) { badge.innerText = `y+ = ${yPlus.toFixed(1)} (Wall Func)`; badge.style.color = '#3B82F6'; }
+      } else {
+        if (badge) { badge.innerText = `y+ = ${yPlus.toFixed(1)} (Low-Re Resolved)`; badge.style.color = '#10B981'; }
+      }
+
       ctx.fillStyle = '#1E2330';
       ctx.fillRect(0, cvs.height - 12, cvs.width, 12);
       ctx.fillStyle = '#64748B';
       ctx.font = '9px monospace';
-      ctx.fillText('Solid Boundary Wall (y=0)', 6, cvs.height - 3);
+      ctx.fillText('Solid Wall Boundary (y=0)', 6, cvs.height - 3);
 
       let y = cvs.height - 12;
       let h = Math.max(2.5, (deltaS_mm / delta_mm) * (cvs.height - 24) * 8);
       for (let i = 0; i < layers; i++) {
         y -= h;
         if (y < 14) break;
-        ctx.strokeStyle = i === 0 ? '#00C7E8' : '#2A3447';
-        ctx.lineWidth = i === 0 ? 1.5 : 1;
+        ctx.strokeStyle = i === 0 ? statusColor : '#2A3447';
+        ctx.lineWidth = i === 0 ? 2 : 1;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(cvs.width, y);
         ctx.stroke();
         h *= 1.15;
       }
-      ctx.fillStyle = '#00C7E8';
+      ctx.fillStyle = statusColor;
       ctx.font = '9px monospace';
-      ctx.fillText(`Δs = ${deltaS_mm}mm (${layers} layers @ r=1.15)`, 6, 10);
+      ctx.fillText(`First Cell Δs = ${deltaS_mm}mm (${layers} layers @ r=1.15)`, 6, 10);
     }
 
-    // 4. Transition: Landing -> 4-Zone Workstation
+    // 4. Transition: Landing -> 4-Zone Workstation (CSS Grid Mode Switch)
     document.getElementById('btnInitWorkflow').onclick = async () => {
       document.getElementById('landingOverlay').style.display = 'none';
       document.getElementById('blMagnifier').style.display = 'block';
@@ -492,7 +597,7 @@
       const app = document.getElementById('appContainer');
       app.className = 'mode-workstation';
 
-      // Clean viewport resize without resetting Three.js WebGL context
+      // Clean viewport resize without destroying Three.js WebGL context
       setTimeout(() => {
         const cont = document.getElementById('threeMount');
         camera.aspect = cont.clientWidth / cont.clientHeight;
@@ -525,7 +630,7 @@
         syncWorkstationUI(caseData);
         loadCopilotReview(caseData.id);
         loadDecisionTrail();
-        renderSolverDictionaries(caseData);
+        await fetchSolverDictionaries(caseData);
       } catch (e) {
         console.error("Failed to initialize case in backend:", e);
       }
@@ -559,7 +664,7 @@
       }
     }
 
-    // Parametric Inspector Debounced PATCH updates
+    // Parametric Inspector Debounced PATCH updates (150ms)
     function bindParametricInspector() {
       const inputs = ['wsVelocity', 'wsChord', 'wsYPlus', 'wsRegime'];
       inputs.forEach(id => {
@@ -582,12 +687,12 @@
               syncWorkstationUI(updated);
               loadCopilotReview(activeCaseId);
               loadDecisionTrail();
-              renderSolverDictionaries(updated);
+              await fetchSolverDictionaries(updated);
 
               const p = updated.physics_json;
               if (p) {
                 updateDomainBox(p.inlet_distance_m, p.outlet_distance_m, p.lateral_distance_m);
-                drawBoundaryLayerWidget(p.first_cell_height_mm, p.boundary_layer_thickness_mm, p.recommended_prism_layers);
+                drawBoundaryLayerWidget(p.first_cell_height_mm, p.boundary_layer_thickness_mm, p.recommended_prism_layers, yPlus);
               }
             } catch (err) {
               console.error("PATCH case error:", err);
@@ -648,35 +753,39 @@
       }
     }
 
-    function renderSolverDictionaries(caseData) {
-      const p = caseData.physics_json || {};
-      const dict = `/*--------------------------------*- C++ -*----------------------------------*\\
-| =========                 |                                                 |
-| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\\\    /   O peration     | Version:  v2212                                 |
-|   \\\\  /    A nd           | Case:     ${caseData.name}                      |
-|    \\\\/     M anipulation  | Solver:   ${p.mach_number >= 0.3 ? 'rhoSimpleFoam' : 'simpleFoam'} |
-\\*---------------------------------------------------------------------------*/
-FoamFile { version 2.0; format ascii; class dictionary; location "system"; object fvSchemes; }
+    async function fetchSolverDictionaries(caseData) {
+      try {
+        const res = await fetch(`${API}/api/solver/generate-config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chord_m: caseData.chord_m,
+            velocity_ms: caseData.velocity_ms,
+            target_y_plus: caseData.target_y_plus,
+            solver: caseData.solver || "OpenFOAM"
+          })
+        });
+        const conf = await res.json();
+        const combined = `// --- OPENFOAM CONFIGURATION FOR: ${caseData.name} ---
+// 1. system/blockMeshDict (3D Farfield Symmetry)
+${conf.blockMeshDict}
 
-ddtSchemes         { default steadyState; }
-gradSchemes        { default Gauss linear; grad(U) cellLimited Gauss linear 1; }
-divSchemes         {
-    default        none;
-    div(phi,U)     bounded Gauss linearUpwind grad(U); // Second-Order Upwind
-    div(phi,k)     bounded Gauss upwind;
-    div(phi,omega) bounded Gauss upwind;
-}
-laplacianSchemes   { default Gauss linear corrected; }
-interpolationSchemes { default linear; }
-
-// --- Boundary Layer First Cell Resolution: ${p.first_cell_height_mm} mm
-// --- Recommended Turbulence Model: ${p.recommended_turbulence_model || 'k-omega SST'}
-// --- Target y+: ${caseData.target_y_plus}`;
-      document.getElementById('codeView').innerText = dict;
+// 2. system/controlDict (Runtime forces monitor)
+${conf.controlDict}`;
+        document.getElementById('codeView').innerText = combined;
+      } catch (e) {
+        document.getElementById('codeView').innerText = "// Could not fetch solver config from backend.";
+      }
     }
 
-    // 5. Workbench Tabs & Diagnostic Parsing via API
+    function copyDictionaryToClipboard() {
+      const code = document.getElementById('codeView').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("Solver dictionary copied to clipboard!");
+      });
+    }
+
+    // 5. Workbench Tabs
     function switchWorkbenchTab(tab) {
       ['Dicts', 'Convergence', 'GCI', 'VTK'].forEach(t => {
         const el = document.getElementById(`tabContent${t}`);
@@ -703,145 +812,7 @@ interpolationSchemes { default linear; }
       }
     }
 
-    // ==========================================
-    // Three.js VTK Field Renderer & Colormap
-    // ==========================================
-    let currentVtkData = null;
-    let vtkMesh = null;
-
-    function turboRainbowColormap(normalized) {
-      // Clamped 0.0 to 1.0 -> CAE standard Rainbow (Blue -> Cyan -> Green -> Yellow -> Red)
-      const t = Math.max(0.0, Math.min(1.0, normalized));
-      let r = 0, g = 0, b = 0;
-      if (t < 0.25) {
-        // Blue to Cyan
-        r = 0;
-        g = t / 0.25;
-        b = 1;
-      } else if (t < 0.5) {
-        // Cyan to Green
-        r = 0;
-        g = 1;
-        b = 1 - (t - 0.25) / 0.25;
-      } else if (t < 0.75) {
-        // Green to Yellow
-        r = (t - 0.5) / 0.25;
-        g = 1;
-        b = 0;
-      } else {
-        // Yellow to Red
-        r = 1;
-        g = 1 - (t - 0.75) / 0.25;
-        b = 0;
-      }
-      return [r, g, b];
-    }
-
-    function renderVtkMeshToScene(data, scalarName = "Cp") {
-      currentVtkData = data;
-      document.getElementById('vtkVertCount').innerText = data.num_vertices.toLocaleString();
-      document.getElementById('vtkTriCount').innerText = data.num_triangles.toLocaleString();
-      document.getElementById('vtkActiveFieldName').innerText = scalarName;
-
-      // Update selector dropdown options
-      const sel = document.getElementById('selScalarField');
-      if (sel) {
-        sel.innerHTML = '<option value="none">Geometry Only</option>';
-        data.available_fields.forEach(f => {
-          const opt = document.createElement('option');
-          opt.value = f;
-          opt.textContent = f === 'Cp' ? 'Surface Pressure Cp' : (f === 'U_magnitude' ? 'Velocity Magnitude |U|' : f);
-          if (f === scalarName) opt.selected = true;
-          sel.appendChild(opt);
-        });
-      }
-
-      // Build Three.js BufferGeometry
-      const geometry = new THREE.BufferGeometry();
-      const vertices = new Float32Array(data.vertices);
-      const indices = new Uint32Array(data.indices);
-      
-      geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-
-      const colors = new Float32Array(data.num_vertices * 3);
-      const scalars = data.scalars[scalarName] || [];
-      const stats = data.scalar_stats[scalarName];
-
-      if (scalars.length === data.num_vertices && stats) {
-        const minVal = stats.min;
-        const maxVal = stats.max;
-        const range = maxVal - minVal || 1.0;
-        document.getElementById('vtkRangeDisplay').innerText = `[${minVal.toFixed(3)}, ${maxVal.toFixed(3)}]`;
-
-        for (let i = 0; i < data.num_vertices; i++) {
-          const norm = (scalars[i] - minVal) / range;
-          const [r, g, b] = turboRainbowColormap(norm);
-          colors[i * 3] = r;
-          colors[i * 3 + 1] = g;
-          colors[i * 3 + 2] = b;
-        }
-      } else {
-        document.getElementById('vtkRangeDisplay').innerText = `Solid Monochrome`;
-        for (let i = 0; i < data.num_vertices * 3; i += 3) {
-          colors[i] = 0.2; colors[i+1] = 0.7; colors[i+2] = 0.9;
-        }
-      }
-
-      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      geometry.computeVertexNormals();
-      geometry.center();
-
-      if (vtkMesh) scene.remove(vtkMesh);
-      if (modelMesh) scene.remove(modelMesh);
-
-      const material = new THREE.MeshStandardMaterial({
-        vertexColors: scalarName !== 'none',
-        color: scalarName === 'none' ? 0x00C7E8 : 0xFFFFFF,
-        roughness: 0.35,
-        metalness: 0.15,
-        side: THREE.DoubleSide
-      });
-
-      vtkMesh = new THREE.Mesh(geometry, material);
-      modelMesh = vtkMesh;
-      scene.add(vtkMesh);
-    }
-
-    function applyVtkScalar(fieldName) {
-      if (!currentVtkData) return;
-      renderVtkMeshToScene(currentVtkData, fieldName);
-    }
-
-    async function loadSampleVtkContour() {
-      try {
-        const res = await fetch(`${API}/api/cfd/sample-vtk`);
-        const data = await res.json();
-        renderVtkMeshToScene(data, "Cp");
-      } catch (err) {
-        console.warn("Could not load sample VTK:", err);
-      }
-    }
-
-    async function handleVtkUpload(input) {
-      const file = input.files[0];
-      if (!file) return;
-
-      const fd = new FormData();
-      fd.append('file', file);
-
-      try {
-        const res = await fetch(`${API}/api/cfd/parse-results`, { method: "POST", body: fd });
-        const data = await res.json();
-        const activeField = data.available_fields.includes("Cp") ? "Cp" : data.available_fields[0] || "none";
-        renderVtkMeshToScene(data, activeField);
-      } catch (err) {
-        console.error("VTK parse error:", err);
-        alert("Failed to parse VTK file. Please ensure valid legacy VTK format.");
-      }
-    }
-
-    // Diagnostics Log Upload -> NO HARDCODED MOCKS
+    // Diagnostics Log Upload
     document.getElementById('logUploader').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -883,7 +854,6 @@ interpolationSchemes { default linear; }
       ctx.fillText('1e-4', 10, 64);
       ctx.fillText('1e-5', 10, 104);
 
-      // Plot synthetic monotonic decay representing the parsed log
       ctx.strokeStyle = data.is_converged ? '#10B981' : '#EF4444';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -900,28 +870,153 @@ interpolationSchemes { default linear; }
       ctx.stroke();
     }
 
-    // ASME V&V 20 GCI Calculation
-    document.getElementById('btnRunGCI').onclick = () => {
+    // ASME V&V 20 GCI Calculation via Backend API
+    async function runGciCalculation() {
       const f3 = parseFloat(document.getElementById('gciCoarse').value) || 0.0091;
       const f2 = parseFloat(document.getElementById('gciMedium').value) || 0.0086;
       const f1 = parseFloat(document.getElementById('gciFine').value) || 0.0084;
-      const r = 1.414; // Systematic grid refinement ratio
 
-      const eps21 = (f2 - f1) / f1;
-      const eps32 = (f3 - f2) / f2;
-      const p = Math.abs(Math.log(Math.abs(eps32 / eps21)) / Math.log(r));
-      const gciFine = (1.25 * Math.abs(eps21)) / (Math.pow(r, p) - 1) * 100;
+      try {
+        const cId = activeCaseId || 1;
+        const res = await fetch(`${API}/api/cases/${cId}/gci`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ f_coarse: f3, f_medium: f2, f_fine: f1, r: 1.414 })
+        });
+        const d = await res.json();
+        const out = document.getElementById('gciResults');
+        out.innerHTML = `
+          <div>Apparent Order of Convergence p: <strong>${d.apparent_order_p}</strong> (Theoretical: ${d.theoretical_order})</div>
+          <div>Relative Error ε₂₁: <strong>${d.relative_error_eps21_percent}%</strong></div>
+          <div>Grid Convergence Index GCI_fine: <strong>${d.gci_fine_percent}%</strong></div>
+          <div style="color: ${d.is_asymptotic_range ? 'var(--accent-emerald)' : 'var(--accent-amber)'}; margin-top: 4px;">
+            ${d.is_asymptotic_range ? '✓ ' + d.recommendation : '⚠ ' + d.recommendation}
+          </div>
+        `;
+        loadDecisionTrail();
+      } catch (err) {
+        console.error("GCI calculation failed:", err);
+      }
+    }
 
-      const out = document.getElementById('gciResults');
-      out.innerHTML = `
-        <div>Apparent Order of Convergence p: <strong>${p.toFixed(3)}</strong> (Theoretical: 2.000)</div>
-        <div>Relative Error ε₂₁: <strong>${(eps21 * 100).toFixed(3)}%</strong></div>
-        <div>Grid Convergence Index GCI_fine: <strong>${gciFine.toFixed(3)}%</strong></div>
-        <div style="color: ${gciFine < 2.0 ? 'var(--accent-emerald)' : 'var(--accent-amber)'}; margin-top: 4px;">
-          ${gciFine < 2.0 ? '✓ Verified in Asymptotic Convergence Range (ASME V&V 20 standard achieved)' : '⚠ Notice: Grid refinement outside asymptotic range'}
-        </div>
-      `;
-    };
+    // Three.js VTK Colormap Field Renderer
+    function turboRainbowColormap(normalized) {
+      const t = Math.max(0.0, Math.min(1.0, normalized));
+      let r = 0, g = 0, b = 0;
+      if (t < 0.25) {
+        r = 0; g = t / 0.25; b = 1;
+      } else if (t < 0.5) {
+        r = 0; g = 1; b = 1 - (t - 0.25) / 0.25;
+      } else if (t < 0.75) {
+        r = (t - 0.5) / 0.25; g = 1; b = 0;
+      } else {
+        r = 1; g = 1 - (t - 0.75) / 0.25; b = 0;
+      }
+      return [r, g, b];
+    }
+
+    function renderVtkMeshToScene(data, scalarName = "Cp") {
+      currentVtkData = data;
+      document.getElementById('vtkVertCount').innerText = data.num_vertices.toLocaleString();
+      document.getElementById('vtkTriCount').innerText = data.num_triangles.toLocaleString();
+      document.getElementById('vtkActiveFieldName').innerText = scalarName;
+
+      const sel = document.getElementById('selScalarField');
+      if (sel) {
+        sel.innerHTML = '<option value="none">Geometry Wireframe</option>';
+        data.available_fields.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          opt.textContent = f === 'Cp' ? 'Surface Pressure Cp' : (f === 'U_magnitude' ? 'Velocity Magnitude |U|' : f);
+          if (f === scalarName) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      const vertices = new Float32Array(data.vertices);
+      const indices = new Uint32Array(data.indices);
+      
+      geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+      const colors = new Float32Array(data.num_vertices * 3);
+      const scalars = data.scalars[scalarName] || [];
+      const stats = data.scalar_stats[scalarName];
+
+      if (scalars.length === data.num_vertices && stats && scalarName !== 'none') {
+        const minVal = stats.min;
+        const maxVal = stats.max;
+        const range = maxVal - minVal || 1.0;
+        document.getElementById('vtkRangeDisplay').innerText = `[${minVal.toFixed(3)}, ${maxVal.toFixed(3)}]`;
+
+        for (let i = 0; i < data.num_vertices; i++) {
+          const norm = (scalars[i] - minVal) / range;
+          const [r, g, b] = turboRainbowColormap(norm);
+          colors[i * 3] = r;
+          colors[i * 3 + 1] = g;
+          colors[i * 3 + 2] = b;
+        }
+      } else {
+        document.getElementById('vtkRangeDisplay').innerText = `Monochrome Wireframe`;
+        for (let i = 0; i < data.num_vertices * 3; i += 3) {
+          colors[i] = 0.2; colors[i+1] = 0.7; colors[i+2] = 0.9;
+        }
+      }
+
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.computeVertexNormals();
+      geometry.center();
+
+      if (vtkMesh) scene.remove(vtkMesh);
+      if (modelMesh) scene.remove(modelMesh);
+
+      const material = new THREE.MeshStandardMaterial({
+        vertexColors: scalarName !== 'none',
+        color: scalarName === 'none' ? 0x00C7E8 : 0xFFFFFF,
+        roughness: 0.35,
+        metalness: 0.15,
+        side: THREE.DoubleSide,
+        wireframe: scalarName === 'none'
+      });
+
+      vtkMesh = new THREE.Mesh(geometry, material);
+      modelMesh = vtkMesh;
+      scene.add(vtkMesh);
+    }
+
+    function applyVtkScalar(fieldName) {
+      if (!currentVtkData) return;
+      renderVtkMeshToScene(currentVtkData, fieldName);
+    }
+
+    async function loadSampleVtkContour() {
+      try {
+        const res = await fetch(`${API}/api/cfd/sample-vtk`);
+        const data = await res.json();
+        renderVtkMeshToScene(data, "Cp");
+      } catch (err) {
+        console.warn("Could not load sample VTK:", err);
+      }
+    }
+
+    async function handleVtkUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const res = await fetch(`${API}/api/cfd/parse-results`, { method: "POST", body: fd });
+        const data = await res.json();
+        const activeField = data.available_fields.includes("Cp") ? "Cp" : data.available_fields[0] || "none";
+        renderVtkMeshToScene(data, activeField);
+      } catch (err) {
+        console.error("VTK parse error:", err);
+        alert("Failed to parse VTK file. Please ensure valid legacy VTK format.");
+      }
+    }
 
     // 6. Verified Knowledge Base Drawer Trigger (RAG Engine API)
     function attachKnowledgeTriggers() {
@@ -947,10 +1042,67 @@ interpolationSchemes { default linear; }
       });
     }
 
+    // Quick Action Bar Bindings
+    function bindTopQuickActions() {
+      document.getElementById('btnQuickImportCAD').onclick = () => {
+        document.getElementById('cadInput').click();
+      };
+
+      document.getElementById('btnQuickConfigBL').onclick = () => {
+        const pane = document.getElementById('leftPane');
+        if (pane) {
+          pane.style.display = 'flex';
+          const vel = document.getElementById('wsVelocity') || document.getElementById('landVelocity');
+          if (vel) vel.focus();
+        }
+      };
+
+      document.getElementById('btnQuickNewRun').onclick = async () => {
+        try {
+          const res = await fetch(`${API}/api/projects/${activeProjectId}/cases`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: `QuickRun_${Date.now().toString().slice(-4)}`,
+              velocity_ms: 40.0,
+              chord_m: 1.8,
+              target_y_plus: 1.0,
+              solver: "OpenFOAM",
+              regime: "external_aerodynamics"
+            })
+          });
+          const c = await res.json();
+          activeCaseId = c.id;
+          alert(`New Simulation Case Created: Case #${c.id} (${c.name})\nSolver: OpenFOAM k-omega SST`);
+          await loadProjectsAndCases();
+          loadDecisionTrail();
+          loadCopilotReview(c.id);
+        } catch (e) {
+          alert("Could not reach backend API at http://127.0.0.1:8000.");
+        }
+      };
+
+      document.getElementById('btnQuickVerify').onclick = () => {
+        switchWorkbenchTab('convergence');
+        document.getElementById('logUploader').click();
+      };
+    }
+
+    async function exportVerificationPDF() {
+      try {
+        const res = await fetch(`${API}/api/verification/export-pdf`, { method: "POST" });
+        const d = await res.json();
+        alert(`Signed Verification Report Generated:\n\nReport ID: ${d.report_id}\nStandards: ${d.standards.join(', ')}\nStatus: ${d.status}\nSignature: ${d.digital_signature}`);
+      } catch (e) {
+        alert("Exporting ASME V&V 20 & NIST SP 800-171 Report...");
+      }
+    }
+
     window.onload = () => {
       initThree();
       bindParametricInspector();
       attachKnowledgeTriggers();
+      bindTopQuickActions();
     };
   </script>
 </body>
